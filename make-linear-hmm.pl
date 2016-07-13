@@ -7,6 +7,10 @@ my $BASE="/home/bmajoros/GGR";
 my $MODEL_DIR="$BASE/model1";
 my $SCHEMA="$MODEL_DIR/model1.schema";
 my $MUMMIE=$ENV{"MUMMIE"};
+my $DNase=0;
+my $H3K27ac=0;
+my $H3K4me1=0;
+my $H3K4me2=0;
 
 # Make the TGF file
 system("$MUMMIE/make-tgf.pl $SCHEMA full $MODEL_DIR/tgf.tgf");
@@ -50,8 +54,21 @@ sub make5stateHMM
   system("$MUMMIE/model-combiner $metamodel $submodels $outfile");
 
   # Set emissions to a good initial value to guide EM in the right direction
-  system("$MUMMIE/hmm-edit $outfile MIX 1 0 1 MIX 2 1 1 MIX 3 2 1 MIX 4 1 1 MIX 5 0 1");
-  system("");
+  system("$MUMMIE/hmm-edit $outfile MIX 1 0 1 MIX 1 1 0 MIX 1 2 0");
+  system("$MUMMIE/hmm-edit $outfile MIX 2 0 0 MIX 2 1 1 MIX 2 2 0");
+  system("$MUMMIE/hmm-edit $outfile MIX 3 0 0 MIX 3 1 0 MIX 3 2 1");
+  system("$MUMMIE/hmm-edit $outfile MIX 4 0 0 MIX 4 1 1 MIX 4 2 0");
+  system("$MUMMIE/hmm-edit $outfile MIX 5 0 1 MIX 5 1 0 MIX 5 2 0");
+  for(my $track=0 ; $track<4 ; ++$track)
+    { system("$MUMMIE/hmm-edit $outfile MEAN 0 $track 0") }
+  system("$MUMMIE/hmm-edit $outfile MEAN 1 $DNase 0");
+  system("$MUMMIE/hmm-edit $outfile MEAN 1 $H3K27ac 1");
+  system("$MUMMIE/hmm-edit $outfile MEAN 1 $H3K4me1 1");
+  system("$MUMMIE/hmm-edit $outfile MEAN 1 $H3K4me2 1");
+  system("$MUMMIE/hmm-edit $outfile MEAN 2 $DNase 2");
+  system("$MUMMIE/hmm-edit -- $outfile MEAN 2 $H3K27ac -2");
+  system("$MUMMIE/hmm-edit -- $outfile MEAN 2 $H3K4me1 -2");
+  system("$MUMMIE/hmm-edit -- $outfile MEAN 2 $H3K4me2 -2");
 }
 
 
