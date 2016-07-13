@@ -8,9 +8,9 @@ my $MODEL_DIR="$BASE/model1";
 my $SCHEMA="$MODEL_DIR/model1.schema";
 my $MUMMIE=$ENV{"MUMMIE"};
 my $DNase=0;
-my $H3K27ac=0;
-my $H3K4me1=0;
-my $H3K4me2=0;
+my $H3K27ac=1;
+my $H3K4me1=2;
+my $H3K4me2=3;
 
 # Make the TGF file
 system("$MUMMIE/make-tgf.pl $SCHEMA full $MODEL_DIR/tgf.tgf");
@@ -19,19 +19,39 @@ system("$MUMMIE/make-tgf.pl $SCHEMA full $MODEL_DIR/tgf.tgf");
 make5stateHMM("$MODEL_DIR/pos5.hmm");
 
 # Make a single-state HMM as baseline
+make1stateHMM("$MODEL_DIR/pos1.hmm");
+
+# Make a background 5-state HMM
+make5stateBackground("$MODEL_DIR/neg5.hmm");
+
+# Make a background 1-state HMM
+make1stateHMM("$MODEL_DIR/neg1.hmm");
 
 
 ##################################################################
+##################################################################
+##################################################################
+
+
+
+sub make1stateHMM
+{
+  my ($outfile)=@_;
+  my $state=makeLoopingState($outfile);
+}
+
+
+
 sub make5stateHMM
 {
   my ($outfile)=@_;
 
   # Make individual states
-  my $state1=makeLoopingState("$MODEL_DIR/fg1.hmm");
-  my $state2=makeLoopingState("$MODEL_DIR/fg2.hmm");
-  my $state3=makeLoopingState("$MODEL_DIR/fg3.hmm");
-  my $state4=makeLoopingState("$MODEL_DIR/fg4.hmm");
-  my $state5=makeLoopingState("$MODEL_DIR/fg5.hmm");
+  makeLoopingState("$MODEL_DIR/fg1.hmm");
+  makeLoopingState("$MODEL_DIR/fg2.hmm");
+  makeLoopingState("$MODEL_DIR/fg3.hmm");
+  makeLoopingState("$MODEL_DIR/fg4.hmm");
+  makeLoopingState("$MODEL_DIR/fg5.hmm");
 
   # Make a metamodel that links the individual states into a chain
   my $metamodel="$MODEL_DIR/pos5.metamodel";
@@ -69,6 +89,46 @@ sub make5stateHMM
   system("$MUMMIE/hmm-edit -- $outfile MEAN 2 $H3K27ac -2");
   system("$MUMMIE/hmm-edit -- $outfile MEAN 2 $H3K4me1 -2");
   system("$MUMMIE/hmm-edit -- $outfile MEAN 2 $H3K4me2 -2");
+
+  # Clean up
+  for(my $i=1 ; $i<=5 ; ++$i) { system("rm $MODEL_DIR/fg$i.hmm") }
+}
+
+
+
+sub make5stateBackground
+{
+  my ($outfile)=@_;
+
+  # Make individual states
+  makeLoopingState("$MODEL_DIR/bg1.hmm");
+  makeLoopingState("$MODEL_DIR/bg2.hmm");
+  makeLoopingState("$MODEL_DIR/bg3.hmm");
+  makeLoopingState("$MODEL_DIR/bg4.hmm");
+  makeLoopingState("$MODEL_DIR/bg5.hmm");
+
+  # Make a metamodel that links the individual states into a chain
+  my $metamodel="$MODEL_DIR/neg5.metamodel";
+  open(META,">$metamodel") || die;
+  print META "0 -> 1 : 1\n";
+  for(my $i=1 ; $i<5 ; ++$i) {
+    my $next=$i+1;
+    print META "$i -> $next : 1\n";
+  }
+  print META "5 -> 0 : 1\n";
+  close(META);
+
+  # Make submodel file that lists the state filenames
+  my $submodels="$MODEL_DIR/neg5.submodels";
+  open(SUB,">$submodels") || die;
+  for(my $i=1 ; $i<=5 ; ++$i) { print SUB "$i = $MODEL_DIR/bg$i.hmm\n" }
+  close(SUB);
+
+  # Combine states into one model
+  system("$MUMMIE/model-combiner $metamodel $submodels $outfile");
+
+  # Clean up
+  for(my $i=1 ; $i<=5 ; ++$i) { system("rm $MODEL_DIR/bg$i.hmm") }
 }
 
 
