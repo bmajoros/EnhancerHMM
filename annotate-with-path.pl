@@ -14,10 +14,15 @@ for(my $i=0 ; $i<$n ; ++$i) {
   my $file=$files[$i]; chomp $file;
   system("cp $indir/$file $outdir");
   open(OUT,">>$outdir/$file") || die;
+  print OUT "\%state\n";
   open(IN,"$MUMMIE/parse $model $indir/$file |") || die;
   <IN>; # skip header line
   while(<IN>) {
-    print OUT $_;
+    chomp;
+    my $state=$_+0;
+    if($state==4) { $state=2 }
+    if($state==5) { $state=1 }
+    print OUT "$state\n";
   }
   close(IN);
   close(OUT);
