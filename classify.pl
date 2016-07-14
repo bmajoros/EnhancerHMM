@@ -6,7 +6,7 @@ my $ROC="tmp.roc";
 my $MUMMIE=$ENV{"MUMMIE"};
 
 my $name=ProgramName::get();
-die "$name <test-pos-dir> <test-neg-dir> <pos.hmm> <neg.hmm>" unless @ARGV==4;
+die "$name <test-pos-dir> <test-neg-dir> <pos.hmm> <neg.hmm>\n" unless @ARGV==4;
 my ($posDir,$negDir,$posHMM,$negHMM)=@ARGV;
 
 open(ROC,">$ROC") || die "can't write to file: $ROC\n";

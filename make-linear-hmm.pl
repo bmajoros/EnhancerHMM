@@ -19,18 +19,31 @@ system("$MUMMIE/make-tgf.pl $SCHEMA full $MODEL_DIR/tgf.tgf");
 make5stateHMM("$MODEL_DIR/pos5.hmm");
 
 # Make a single-state HMM as baseline
-make1stateHMM("$MODEL_DIR/pos1.hmm");
+#make1stateHMM("$MODEL_DIR/pos1.hmm");
+simple1StateHMM("$MODEL_DIR/pos1.hmm");
 
 # Make a background 5-state HMM
 make5stateBackground("$MODEL_DIR/neg5.hmm");
 
 # Make a background 1-state HMM
-make1stateHMM("$MODEL_DIR/neg1.hmm");
+#make1stateHMM("$MODEL_DIR/neg1.hmm");
+simple1StateHMM("$MODEL_DIR/neg1.hmm");
 
 
 ##################################################################
 ##################################################################
 ##################################################################
+
+
+sub simple1StateHMM
+{
+  my ($filename)=@_;
+  my $topology="0";
+  my $order=0;
+  my $connectedness=1;
+  my $mixtureComponents=1;
+  system("$MUMMIE/random-HMM -c $topology 2 $connectedness $mixtureComponents $SCHEMA $order $filename");
+}
 
 
 
