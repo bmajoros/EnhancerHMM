@@ -26,8 +26,8 @@ simple1StateHMM("$MODEL_DIR/pos1.hmm");
 make5stateBackground("$MODEL_DIR/neg5.hmm");
 
 # Make a background 1-state HMM
-#make1stateHMM("$MODEL_DIR/neg1.hmm");
-simple1StateHMM("$MODEL_DIR/neg1.hmm");
+make1stateHMM("$MODEL_DIR/neg1.hmm");
+#simple1StateHMM("$MODEL_DIR/neg1.hmm");
 
 
 ##################################################################
