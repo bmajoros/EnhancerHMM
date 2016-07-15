@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 use strict;
 
-my $KILL="H3K27ac,H3K4me1,H3K4me2";
+my $KILL="H3K4me2";
 
 system("m/fastb-zero-out-tracks.pl pos-test $KILL pos-temp");
 system("m/fastb-zero-out-tracks.pl neg-test $KILL neg-temp");
