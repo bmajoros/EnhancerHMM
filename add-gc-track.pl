@@ -10,10 +10,10 @@ my $halfWindow=int($windowSize/2);
 
 my $fastb=new Fastb($infile);
 my $L=$fastb->getLength();
-my $dnaTrack=$fastb->getTrackByName("DNA");
+my $dnaTrack=$fastb->getTrackByName("dna");
 my $seq=$dnaTrack->getData();
 $seq="\U$seq";
-die "no DNA track found" unless $dnaTrack;
+die "no dna track found" unless $dnaTrack;
 
 my $GC=[];
 my $lastWindow=$L-$windowSize;
@@ -26,7 +26,7 @@ for(my $pos=0 ; $pos<=$lastWindow ; ++$pos) {
 }
 my $gcTrack=new FastbTrack("continuous","GC",$GC);
 $fastb->addTrack($gcTrack);
-$fastb->dropTrack("DNA");
+$fastb->dropTrack("dna");
 $fastb->save($outfile);
 
 

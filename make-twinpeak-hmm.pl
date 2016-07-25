@@ -16,8 +16,10 @@ open(META,">$metamodel") || die;
 print META "0 -> 1 : 1\n";
 for(my $i=1 ; $i<7 ; ++$i) {
   my $next=$i+1;
-  print META "$i -> $next : 1\n" }
-print META "7 -> 0 : 1\n";
+  print META "$i ->$i : 0.997\n";
+  print META "$i -> $next : 0.003\n" }
+print META "7 -> 7 : 0.997\n";
+print META "7 -> 0 : 0.003\n";
 close(META);
 
 # Make submodel file that lists the state filenames

@@ -21,7 +21,9 @@ for(my $i=0 ; $i<$n ; ++$i) {
     chomp;
     my $state=$_+0;
     if($state==4) { $state=2 }
-    if($state==5) { $state=1 }
+    elsif($state==5) { $state=3 }
+    elsif($state==6) { $state=2 }
+    elsif($state==7) { $state=1 }
     print OUT "$state\n";
   }
   close(IN);
