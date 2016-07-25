@@ -16,7 +16,7 @@ for(my $i=0 ; $i<$n ; ++$i) {
   my $id=$1;
   next if $seen{$id};
   system("cp $indir/$file $outdir");
-  $seen{$id}1=;
+  $seen{$id}=1;
 }
 
 
