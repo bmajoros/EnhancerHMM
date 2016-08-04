@@ -22,19 +22,22 @@ for(my $i=0 ; $i<$n ; ++$i) {
   my $file=$files[$i]; chomp $file;
   next unless $file=~/\.fastb$/;
   system("$EXTRACT $inDir/$file $TEMP_FASTA");
-
   system("$MARKOV -m 1 $TEMP_FASTA > $TEMP_BACKGROUND");
+  my $fastb=new Fastb("$indir/$file");
+  my $L=$fastb->getLength();
+  my $motifCode="0"x$L;
 
+  ###
   my $MOTIF="main-motifs/GR.meme";
+  ###
+
   system("$MAST $MOTIF $TEMP_FASTA -hit_list -mt $THRESHOLD -bfile $TEMP_BACKGROUND > $TEMP_OUT");
-
-
   open(IN,$TEMP_OUT) || die $TEMP_OUT;
   while(<IN>) {
     next if(/^#/);
     chomp; my @fields=split; next unless @fields>=6;
     my ($name,$strand,$begin,$end,$score,$P)=@fields;
-    
+    for(my $i=$begin ; $i<$end ; ++$i) { substr($motifCode,$i,1,"1") }
   }
   close(IN);
 
