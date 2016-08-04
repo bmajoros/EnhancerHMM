@@ -22,6 +22,7 @@ while(<IN>) {
     my $outfile="$OUTDIR/$name.meme";
     open(OUT,">$outfile") || die "can't write to file $outfile";
     print OUT "$header\n";
+    print OUT $_;
     while(<IN>) {
       last if(/URL/);
       print OUT
