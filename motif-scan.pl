@@ -25,7 +25,7 @@ for(my $i=0 ; $i<$n ; ++$i) {
   system("$MARKOV -m 1 $TEMP_FASTA > $TEMP_BACKGROUND");
   my $fastb=new Fastb("$indir/$file");
   my $L=$fastb->getLength();
-  my $motifCode="0"x$L;
+  my $motifData=[]; for(my $i=0;$i<$L;++$i){push @$motifData,0}
 
   ###
   my $MOTIF="main-motifs/GR.meme";
@@ -37,10 +37,11 @@ for(my $i=0 ; $i<$n ; ++$i) {
     next if(/^#/);
     chomp; my @fields=split; next unless @fields>=6;
     my ($name,$strand,$begin,$end,$score,$P)=@fields;
-    for(my $i=$begin ; $i<$end ; ++$i) { substr($motifCode,$i,1,"1") }
+    for(my $i=$begin ; $i<$end ; ++$i) { $motifData->[$i]=1 }
   }
   close(IN);
-
+  $fastb->addTrack("continuous","GR",$motifData);
+  $fastb->save("$outDir/$file");
 # # All non-overlapping hits in all sequences from "tmp.fasta".
 # # sequence_name motif hit_start hit_end score hit_p-value
 # iter0_peak130864.t05.standardized -1 9 25 -1904.73 1.14e-02
