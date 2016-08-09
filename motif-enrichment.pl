@@ -10,14 +10,28 @@ my ($dir)=@ARGV;
 my @files=`ls $dir`;
 foreach my $file (@files) {
   chomp $file; next unless $file=~/\.fastb$/;
-  my $fastb=new Fastb($file);
+  my $fastb=new Fastb("$dir/$file");
   my $stateTrack=$fastb->getTrackByName("state");
   my ($begin,$end)=findPeak($stateTrack);
-  print "$begin - $end\n";
+  my $center=int(($begin+$end)/2);
+  my $slice=$fastb->slice($begin,$end);
+  my @hits;
+  findHits($slice,"CTCF",\@hits);
+  findHits($slice,"FOX",\@hits);
+  findHits($slice,"CEBP",\@hits);
+  findHits($slice,"AP1",\@hits);
+  findHits($slice,"KLF",\@hits);
+  findHits($slice,"GR/AR/MR",\@hits);
 }
 
 
 ################################################################3
+sub findHits {
+  my ($fastb,$factor,$hits)=@_;
+  my $track=$fastb->getTrackByName($factor); die unless $track;
+  
+}
+
 sub findPeak {
   my ($track)=@_;
   my $array=$track->getData();
