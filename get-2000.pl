@@ -30,6 +30,7 @@ sub process {
     next unless $file=~/\.fastb$/;
     $file=~/peak(\d+)\.t(\d+)/ || die $file;
     my ($peak,$time)=($1,$2);
+    next unless $time>6;
     my $key="$peak $time";
     next if $blacklist{$key};
     System("cp $fromDir/$file $toDir");
