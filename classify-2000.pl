@@ -1,6 +1,7 @@
 #!/usr/bin/perl
 use strict;
 use ProgramName;
+use Fastb;
 
 my $THRESHOLD=1000;
 my $MUMMIE=$ENV{"MUMMIE"};
@@ -25,9 +26,21 @@ sub process
     my $ratio=$numer-$denom;
     #print "$ratio\n";
     if($ratio>=$THRESHOLD) {
-
+      System("/home/bmajoros/GGR/src/annotate-fastb.pl $fromDir-noDNA/$file $posHMM $toDir/$file");
+      my $fastb=new Fastb("$fromDir/$file");
+      my $track=$fastb->getTrackByName("dna");
+      my $string=$track->getData();
+      open(OUT,">>$toDir/$file");
+      print OUT ">dna\n$string\n";
+      close(OUT);
     }
   }
+}
+
+sub System {
+  my ($cmd)=@_;
+  #print "$cmd\n";
+  system($cmd);
 }
 
 
