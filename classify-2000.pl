@@ -3,12 +3,12 @@ use strict;
 use ProgramName;
 use Fastb;
 
-my $THRESHOLD=1000;
 my $MUMMIE=$ENV{"MUMMIE"};
 
 my $name=ProgramName::get();
-die "$name <from-dir> <to-dir> <pos.hmm> <neg.hmm>\n" unless @ARGV==4;
-my ($fromDir,$toDir,$posHMM,$negHMM)=@ARGV;
+die "$name <from-dir> <to-dir> <pos.hmm> <neg.hmm> <LLR-threshold>\n"
+  unless @ARGV==5;
+my ($fromDir,$toDir,$posHMM,$negHMM,$THRESHOLD)=@ARGV;
 
 process($fromDir,$toDir,$posHMM,$negHMM,1);
 
