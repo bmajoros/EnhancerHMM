@@ -13,8 +13,25 @@ process("$GGR/nonredundant/bg","$GGR/2000/bg");
 
 ####################################################################
 
+sub System {
+  my ($cmd)=@_;
+  print "$cmd\n";
+  #system($cmd);
+}
+
 sub process {
-  
+  my ($fromDir,$toDir)=@_;
+  my @files=`ls $fromDir`;
+  my $numFiles=@files;
+  for(my $i=0 ; $i<$numFiles ; ++$i) {
+    my $file=$files[$i]; chomp $file;
+    next unless $file=~/\.fastb$/;
+    $file=~/peak(\d+)\.t(\d+)/ || die $fastb;
+    my ($peak,$time)=($1,$2);
+    my $key="$peak $time";
+    next if $hash->{$key};
+    System("cp $fromDir/$file $toDir");
+  }
 }
 
 sub blacklist {
@@ -24,7 +41,7 @@ sub blacklist {
   for(my $i=0 ; $i<$numFiles ; ++$i) {
     my $file=$files[$i]; chomp $file;
     next unless $file=~/\.fastb$/;
-    $fastb=~/peak(\d+)\.t(\d+)/ || die $fastb;
+    $file=~/peak(\d+)\.t(\d+)/ || die $fastb;
     my ($peak,$time)=($1,$2);
     my $key="$peak $time";
     $hash->{$key}=1;
