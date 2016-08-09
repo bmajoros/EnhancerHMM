@@ -2,6 +2,7 @@
 use strict;
 use ProgramName;
 
+my $THRESHOLD=1000;
 my $MUMMIE=$ENV{"MUMMIE"};
 
 my $name=ProgramName::get();
@@ -19,10 +20,13 @@ sub process
   for(my $i=0 ; $i<$n ; ++$i) {
     my $file=$files[$i]; chomp $file;
     next unless $file=~/\.fastb$/;
-    my $numer=`$MUMMIE/get-likelihood $posHMM $dir/$file`;
-    my $denom=`$MUMMIE/get-likelihood $negHMM $dir/$file`;
+    my $numer=`$MUMMIE/get-likelihood $posHMM $fromDir-noDNA/$file`;
+    my $denom=`$MUMMIE/get-likelihood $negHMM $fromDir-noDNA/$file`;
     my $ratio=$numer-$denom;
-    print "$ratio\n";
+    #print "$ratio\n";
+    if($ratio>=$THRESHOLD) {
+
+    }
   }
 }
 
