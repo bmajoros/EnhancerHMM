@@ -12,11 +12,11 @@ my @files=`ls $dir`;
 foreach my $file (@files) {
   chomp $file; next unless $file=~/\.fastb$/;
   my $fastb=new Fastb("$dir/$file");
-  my $stateTrack=$fastb->getTrackByName("state");
-  my ($begin,$end)=findPeak($stateTrack);
-  my $center=int(($begin+$end)/2);
-  #my $slice=$fastb;
-  my $slice=$fastb->slice($begin,$end);
+  #my $stateTrack=$fastb->getTrackByName("state");
+  #my ($begin,$end)=findPeak($stateTrack);
+  #my $center=int(($begin+$end)/2);
+  my $slice=$fastb;
+  #my $slice=$fastb->slice($begin,$end);
   my @hits;
   findHits($slice,"CTCF",\@hits);
   findHits($slice,"FOX",\@hits);
@@ -24,16 +24,14 @@ foreach my $file (@files) {
   findHits($slice,"AP1",\@hits);
   findHits($slice,"KLF",\@hits);
   findHits($slice,"GR/AR/MR",\@hits);
-  foreach my $hit (@hits) {
-    $counts{$hit->{factor}}++;
-  }
-  my $central=findCentral(\@hits,$center);
-  if($central) { ++$centrals{$central->{factor} } }
+  foreach my $hit (@hits) { $counts{$hit->{factor}}++ }
+  #my $central=findCentral(\@hits,$center);
+  #if($central) { ++$centrals{$central->{factor} } }
 }
 my @factors=keys %counts;
 foreach my $factor (@factors) {
-  #my $count=$counts{$factor};
-  my $count=$centrals{$factor};
+  my $count=$counts{$factor};
+  #my $count=$centrals{$factor};
   print "$factor\t$count\n";
 }
 
