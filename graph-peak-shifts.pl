@@ -25,6 +25,11 @@ sub process {
     my $zeroFastb=new Fastb($zeroFile);
     my $threeFastb=new Fastb($threeFile);
     $threeFastb->dropTrack("dna");
+    $threeFastb->dropTrack("H3K4me1");
+    $threeFastb->dropTrack("H3K4me2");
+    $threeFastb->dropTrack("CTCF");
+    $threeFastb->dropTrack("KLF");
+    $threeFastb->dropTrack("H3K27ac");
     my $dnase0=$zeroFastb->getTrackByName("DNase");
     my $p300_0=$zeroFastb->getTrackByName("EP300");
     $dnase0->rename("dnase0");
