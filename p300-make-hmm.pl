@@ -17,9 +17,11 @@ my $H3K4me2=4;
 system("$MUMMIE/make-tgf.pl $SCHEMA full $MODEL_DIR/tgf.tgf");
 
 # Make the linear HMM
+print "make5stateHMM\n";
 make5stateHMM("$MODEL_DIR/pos5.hmm");
 
 # Make a single-state HMM as baseline
+print "simple1StateHMM(pos1.hmm)\n";
 #make1stateHMM("$MODEL_DIR/pos1.hmm");  # uses mixture model
 simple1StateHMM("$MODEL_DIR/pos1.hmm"); # no mixture model
 
@@ -28,6 +30,7 @@ simple1StateHMM("$MODEL_DIR/pos1.hmm"); # no mixture model
 
 # Make a background 1-state HMM
 #make1stateHMM("$MODEL_DIR/neg1.hmm"); # uses mixture model
+print "simple2StateHMM(neg1.hmm)\n";
 simple1StateHMM("$MODEL_DIR/neg1.hmm"); # no mixture model
 
 
@@ -93,16 +96,18 @@ sub make5stateHMM
   system("$MUMMIE/hmm-edit $outfile MIX 3 0 0 MIX 3 1 0 MIX 3 2 1");
   system("$MUMMIE/hmm-edit $outfile MIX 4 0 0 MIX 4 1 1 MIX 4 2 0");
   system("$MUMMIE/hmm-edit $outfile MIX 5 0 1 MIX 5 1 0 MIX 5 2 0");
-  for(my $track=0 ; $track<4 ; ++$track)
-    { system("$MUMMIE/hmm-edit $outfile MEAN 0 $track 0") }
-  system("$MUMMIE/hmm-edit $outfile MEAN 1 $DNase 0");
-  system("$MUMMIE/hmm-edit $outfile MEAN 1 $H3K27ac 1");
-  system("$MUMMIE/hmm-edit $outfile MEAN 1 $H3K4me1 1");
-  system("$MUMMIE/hmm-edit $outfile MEAN 1 $H3K4me2 1");
-  system("$MUMMIE/hmm-edit $outfile MEAN 2 $DNase 2");
-  system("$MUMMIE/hmm-edit -- $outfile MEAN 2 $H3K27ac -2");
-  system("$MUMMIE/hmm-edit -- $outfile MEAN 2 $H3K4me1 -2");
-  system("$MUMMIE/hmm-edit -- $outfile MEAN 2 $H3K4me2 -2");
+  for(my $track=0 ; $track<5 ; ++$track)
+    { system("$MUMMIE/hmm-edit -- $outfile MEAN 0 $track -0.5") }
+  system("$MUMMIE/hmm-edit -- $outfile MEAN 1 $DNase 0");
+  system("$MUMMIE/hmm-edit -- $outfile MEAN 1 $P300 0");
+  system("$MUMMIE/hmm-edit -- $outfile MEAN 1 $H3K27ac 1");
+  system("$MUMMIE/hmm-edit -- $outfile MEAN 1 $H3K4me1 1");
+  system("$MUMMIE/hmm-edit -- $outfile MEAN 1 $H3K4me2 1");
+  system("$MUMMIE/hmm-edit -- $outfile MEAN 2 $DNase 2");
+  system("$MUMMIE/hmm-edit -- $outfile MEAN 2 $P300 2");
+  system("$MUMMIE/hmm-edit -- $outfile MEAN 2 $H3K27ac -1");
+  system("$MUMMIE/hmm-edit -- $outfile MEAN 2 $H3K4me1 -1");
+  system("$MUMMIE/hmm-edit -- $outfile MEAN 2 $H3K4me2 0");
 
   # Clean up
   for(my $i=1 ; $i<=5 ; ++$i) { system("rm $MODEL_DIR/fg$i.hmm") }
