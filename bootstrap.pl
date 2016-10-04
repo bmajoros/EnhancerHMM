@@ -1,4 +1,5 @@
 #!/bin/env perl
+use strict;
 use Fastb;
 $|=1;
 
