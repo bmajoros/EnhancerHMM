@@ -1,8 +1,13 @@
 #!/bin/env Rscript
 
+args <- commandArgs(TRUE)
+if(length(args)!=2) {
+  cat("usage: P N\n");
+  q(status=1)
+}
+p <- as.numeric(args[1])
+count <- as.numeric(args[2])
 sampleSize <- 10000
-count <- 5
-p <- 0.01
 
 for(i in 1:sampleSize) {
     v <- rgeom(count,p)
