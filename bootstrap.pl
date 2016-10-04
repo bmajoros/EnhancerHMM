@@ -3,12 +3,14 @@ use Fastb;
 $|=1;
 
 # Globals
+my $VERBOSE=0;
 my $MIN_PEAK_LEN=200;
 my $MAX_OFF_CENTER=500;
 my $MIN_HUMP_LEN=200;
 my $MIN_PEAK_DNASE=1;
 my $MAX_PEAK_MARKS=0;
-my $MIN_HUMP_MARKS=0.5;
+my $PEAK_MEAN_WIDTH=50;
+my $MIN_HUMP_MARKS=0;
 my $MAX_HUMP_DNASE=0;
 my $MAX_FLANK=0;
 my $MUMMIE=$ENV{"MUMMIE"};
@@ -46,11 +48,15 @@ for(my $i=0 ; $i<$numFiles ; ++$i) {
   # Parse and apply filters
   my $fastb=new Fastb($file);
   my $path=parse($file);
-  next unless goodPath($path,$fastb);
+  if(!goodPath($path,$fastb)) {
+    #system("/home/bmajoros/GGR/src/annotate-fastb.pl $file $HMM temp.fastb");
+    #system("cat temp.fastb | $MUMMIE/fastb-to-xgraph.pl");
+    next;
+  }
 
   # Plot on screen
-  system("/home/bmajoros/GGR/src/annotate-fastb.pl $file $HMM temp.fastb");
-  system("cat temp.fastb | $MUMMIE/fastb-to-xgraph.pl");
+  #system("/home/bmajoros/GGR/src/annotate-fastb.pl $file $HMM temp.fastb");
+  #system("cat temp.fastb | $MUMMIE/fastb-to-xgraph.pl");
   print OUT "$file\n";
 
   # Clean up
@@ -83,7 +89,7 @@ sub goodPath {
   die $numIntervals unless $numIntervals==5;
   my ($leftFlank,$leftHump,$peak,$rightHump,$rightFlank)=@$intervals;
 
-  print "$leftFlank->[0]\-$leftFlank->[1]  $leftHump->[0]\-$leftHump->[1]  $peak->[0]\-$peak->[1]  $rightHump->[0]\-$rightHump->[1]  $rightFlank->[0]\-$rightFlank->[1]\n";
+  #print "$leftFlank->[0]\-$leftFlank->[1]  $leftHump->[0]\-$leftHump->[1]  $peak->[0]\-$peak->[1]  $rightHump->[0]\-$rightHump->[1]  $rightFlank->[0]\-$rightFlank->[1]\n";
 
   # Examine positions and widths of peak and humps
   my $peakCenter=int($peak->[0]+$peak->[1])/2;
@@ -95,46 +101,75 @@ sub goodPath {
      $peakLen < $MIN_PEAK_LEN ||
      $leftHumpLen < $MIN_HUMP_LEN ||
      $rightHumpLen < $MIN_HUMP_LEN) {
-    print "offCenter=$offCenter peakLen=$peakLen leftHump=$leftHumpLen rightHump=$rightHumpLen\n";
+    if($VERBOSE) { print "offCenter=$offCenter peakLen=$peakLen leftHump=$leftHumpLen rightHump=$rightHumpLen\n" }
     return 0 }
 
-  # Apply filters to values of tracks in the peak
-  my $peakDnase=trackIntervalMean($fastb,"DNase",$peak);
-  my $peakP300=trackIntervalMean($fastb,"EP300",$peak);
-  my $peakH3K4me1=trackIntervalMean($fastb,"H3K4me1",$peak);
-  my $peakH3K4me2=trackIntervalMean($fastb,"H3K4me2",$peak);
-  my $peakH3K27ac=trackIntervalMean($fastb,"H3K27ac",$peak);
-  if($peakH3K4me1>$MAX_PEAK_MARKS || $peakH3K4me2>$MAX_PEAK_MARKS
+  # Compute mean values of tracks in peak
+  my $peakDnase=trackIntervalMean($fastb,"DNase",$peak,$PEAK_MEAN_WIDTH);
+  my $peakP300=trackIntervalMean($fastb,"EP300",$peak,$PEAK_MEAN_WIDTH);
+  my $peakH3K4me1=trackIntervalMean($fastb,"H3K4me1",$peak,$PEAK_MEAN_WIDTH);
+  my $peakH3K4me2=trackIntervalMean($fastb,"H3K4me2",$peak,$PEAK_MEAN_WIDTH);
+  my $peakH3K27ac=trackIntervalMean($fastb,"H3K27ac",$peak,$PEAK_MEAN_WIDTH);
+
+  # Compute mean values of tracks in left hump
+  my $leftHumpDnase=trackIntervalMean($fastb,"DNase",$leftHump);
+  my $leftHumpP300=trackIntervalMean($fastb,"EP300",$leftHump);
+  my $leftHumpH3K4me1=trackIntervalMean($fastb,"H3K4me1",$leftHump);
+  my $leftHumpH3K4me2=trackIntervalMean($fastb,"H3K4me2",$leftHump);
+  my $leftHumpH3K27ac=trackIntervalMean($fastb,"H3K27ac",$leftHump);
+
+  # Compute mean values of tracks in right hump
+  my $rightHumpDnase=trackIntervalMean($fastb,"DNase",$rightHump);
+  my $rightHumpP300=trackIntervalMean($fastb,"EP300",$rightHump);
+  my $rightHumpH3K4me1=trackIntervalMean($fastb,"H3K4me1",$rightHump);
+  my $rightHumpH3K4me2=trackIntervalMean($fastb,"H3K4me2",$rightHump);
+  my $rightHumpH3K27ac=trackIntervalMean($fastb,"H3K27ac",$rightHump);
+
+  # Compute mean values of tracks in left flank
+  my $leftFlankDnase=trackIntervalMean($fastb,"DNase",$leftFlank);
+  my $leftFlankP300=trackIntervalMean($fastb,"EP300",$leftFlank);
+  my $leftFlankH3K4me1=trackIntervalMean($fastb,"H3K4me1",$leftFlank);
+  my $leftFlankH3K4me2=trackIntervalMean($fastb,"H3K4me2",$leftFlank);
+  my $leftFlankH3K27ac=trackIntervalMean($fastb,"H3K27ac",$leftFlank);
+
+  # Compute mean values of tracks in right flank
+  my $rightFlankDnase=trackIntervalMean($fastb,"DNase",$rightFlank);
+  my $rightFlankP300=trackIntervalMean($fastb,"EP300",$rightFlank);
+  my $rightFlankH3K4me1=trackIntervalMean($fastb,"H3K4me1",$rightFlank);
+  my $rightFlankH3K4me2=trackIntervalMean($fastb,"H3K4me2",$rightFlank);
+  my $rightFlankH3K27ac=trackIntervalMean($fastb,"H3K27ac",$rightFlank);
+
+  # Apply filters
+  if($peakH3K4me1>$MAX_PEAK_MARKS ||
+     $peakH3K4me2>$leftHumpH3K4me2 || $peakH3K4me2>$rightHumpH3K4me2
      || $peakH3K27ac>$MAX_PEAK_MARKS || $peakDnase<$MIN_PEAK_DNASE ||
      $peakP300<$MIN_PEAK_DNASE) {
-    print "PEAK: $peakH3K4me1>$MAX_PEAK_MARKS || $peakH3K4me2>$MAX_PEAK_MARKS || $peakH3K27ac>$MAX_PEAK_MARKS || $peakDnase<$MIN_PEAK_DNASE || $peakP300<$MIN_PEAK_DNASE\n";
+    if($VERBOSE0) { print "PEAK: $peakH3K4me1>$MAX_PEAK_MARKS || $peakH3K4me2>$MAX_PEAK_MARKS || $peakH3K27ac>$MAX_PEAK_MARKS || $peakDnase<$MIN_PEAK_DNASE || $peakP300<$MIN_PEAK_DNASE\n" }
     return 0;  }
-
-  # Apply filters to values of tracks in the left hump
-  my $humpDnase=trackIntervalMean($fastb,"DNase",$leftHump);
-  my $humpP300=trackIntervalMean($fastb,"EP300",$leftHump);
-  my $humpH3K4me1=trackIntervalMean($fastb,"H3K4me1",$leftHump);
-  my $humpH3K4me2=trackIntervalMean($fastb,"H3K4me2",$leftHump);
-  my $humpH3K27ac=trackIntervalMean($fastb,"H3K27ac",$leftHump);
   if($humpH3K4me1<$MIN_HUMP_MARKS || $humpH3K4me2<$MIN_HUMP_MARKS
      || $humpH3K27ac<$MIN_HUMP_MARKS || $humpDnase>$MAX_HUMP_DNASE ||
      $humpP300>$MAX_HUMP_DNASE) {
-    print "LEFT HUMP: $humpH3K4me1<$MIN_HUMP_MARKS || $humpH3K4me2<$MIN_HUMP_MARKS || $humpH3K27ac<$MIN_HUMP_MARKS || $humpDnase>$MAX_HUMP_DNASE || $humpP300>$MAX_HUMP_DNASE\n";
+    if($VERBOSE) { print "LEFT HUMP: $humpH3K4me1<$MIN_HUMP_MARKS || $humpH3K4me2<$MIN_HUMP_MARKS || $humpH3K27ac<$MIN_HUMP_MARKS || $humpDnase>$MAX_HUMP_DNASE || $humpP300>$MAX_HUMP_DNASE\n" }
     return 0;  }
-
-  # Apply filters to values of tracks in the right hump
-  my $humpDnase=trackIntervalMean($fastb,"DNase",$rightHump);
-  my $humpP300=trackIntervalMean($fastb,"EP300",$rightHump);
-  my $humpH3K4me1=trackIntervalMean($fastb,"H3K4me1",$rightHump);
-  my $humpH3K4me2=trackIntervalMean($fastb,"H3K4me2",$rightHump);
-  my $humpH3K27ac=trackIntervalMean($fastb,"H3K27ac",$rightHump);
   if($humpH3K4me1<$MIN_HUMP_MARKS || $humpH3K4me2<$MIN_HUMP_MARKS
      || $humpH3K27ac<$MIN_HUMP_MARKS || $humpDnase>$MAX_HUMP_DNASE ||
      $humpP300>$MAX_HUMP_DNASE) {
-    print "RIGHT HUMP: $humpH3K4me1<$MIN_HUMP_MARKS || $humpH3K4me2<$MIN_HUMP_MARKS || $humpH3K27ac<$MIN_HUMP_MARKS || $humpDnase>$MAX_HUMP_DNASE || $humpP300>$MAX_HUMP_DNASE\n";
+    if($VERBOSE) { print "RIGHT HUMP: $humpH3K4me1<$MIN_HUMP_MARKS || $humpH3K4me2<$MIN_HUMP_MARKS || $humpH3K27ac<$MIN_HUMP_MARKS || $humpDnase>$MAX_HUMP_DNASE || $humpP300>$MAX_HUMP_DNASE\n" }
+    return 0;  }
+  if($leftFlankDnase>0 || $leftFlankP300>0 ||
+     $leftFlankH3K4me1>$leftHumpH3K4me1 ||
+     $leftFlankH3K4me2>$leftHumpH3K4me2 ||
+     $leftFlankH3K27ac>$leftHumpH3K27ac) {
+    if($VERBOSE) { print "LEFT FLANK: $leftFlankDnase>0 || $leftFlankP300>0 || $leftFlankH3K4me1>$leftHumpH3K4me1 || $leftFlankH3K4me2>$leftHumpH3K4me2 || $leftFlankH3K27ac>$leftHumpH3K27ac\n" }
+    return 0;  }
+  if($rightFlankDnase>0 || $rightFlankP300>0 ||
+     $rightFlankH3K4me1>$rightHumpH3K4me1 ||
+     $rightFlankH3K4me2>$rightHumpH3K4me2 ||
+     $rightFlankH3K27ac>$rightHumpH3K27ac) {
+    if($VERBOSE) { print "RIGHT FLANK: $rightFlankDnase>0 || $rightFlankP300>0 || $rightFlankH3K4me1>$rightHumpH3K4me1 || $rightFlankH3K4me2>$rightHumpH3K4me2 || $rightFlankH3K27ac>$rightHumpH3K27ac\n" }
     return 0;  }
 
-  print "OK\n";
+  if($VERBOSE) { print "OK\n" }
   return 1;
 }
 #=================================================================
@@ -156,11 +191,17 @@ sub getIntervals {
 }
 #=================================================================
 sub trackIntervalMean {
-  my ($fastb,$trackName,$interval)=@_;
+  my ($fastb,$trackName,$interval,$maxLen)=@_;
   my $track=$fastb->getTrackByName($trackName);
-  $track->slice($interval->[0],$interval->[1]);
+  $track=$track->slice($interval->[0],$interval->[1]);
   my $trackData=$track->getData();
   my $L=@$trackData;
+  if($maxLen>0 && $L>$maxLen) {
+    my $trim=$L-$maxLen;
+    $track=$track->slice(int($trim/2),$L-int($trim/2));
+    $trackData=$track->getData();
+    $L=@$trackData;
+  }
   my $sum=0;
   foreach my $x (@$trackData) { $sum+=$x }
   my $mean=$sum/$L;
