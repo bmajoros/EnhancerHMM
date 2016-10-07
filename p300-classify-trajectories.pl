@@ -5,7 +5,7 @@ use ProgramName;
 my $BASE="/home/bmajoros/GGR/p300";
 
 my $name=ProgramName::get();
-die "$name <trajectories.trxt>\n" unless @ARGV==1;
+die "$name <trajectories.txt>\n" unless @ARGV==1;
 my ($infile)=@ARGV;
 
 open(IN,$infile) || die "can't open $infile\n";
@@ -22,9 +22,9 @@ close(IN);
 # =====================================================================
 sub classify {
   my ($array)=@_;
-  my $firstHalf=$count($array,0,6);
-  my $secondHalf=$count($array,6,12);
-  my $total=$count($array,0,12);
+  my $firstHalf=count($array,0,6);
+  my $secondHalf=count($array,6,12);
+  my $total=count($array,0,12);
   if($total>=11) { return "on" }
   if($total<=1) { return "off" }
   if($firstHalf<=2 && $secondHalf>=4) { return "increasing" }
