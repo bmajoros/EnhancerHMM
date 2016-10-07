@@ -2,6 +2,7 @@
 use strict;
 use ProgramName;
 
+my $TOLERANCE=20;
 my $BASE="/home/bmajoros/GGR/p300";
 my $FASTB="$BASE/no-dna";
 my $MUMMIE=$ENV{"MUMMIE"};
@@ -23,6 +24,7 @@ while(<TRAJ>) {
   }
   next unless @ones>=12;
   print "$peak\t";
+  my @signs;
   foreach my $i (@ones) {
     my $time=$times[$i];
     my $fastb="$FASTB/$peak.standardized_across_all_timepoints.$time.fastb";
@@ -34,16 +36,62 @@ while(<TRAJ>) {
     my $rightHumpLen=$rightHump->[1]-$rightHump->[0];
     my $diff=$rightHumpLen-$leftHumpLen;
     my $sign='=';
-    if($diff>20) { $sign='>'}
-    elsif($diff<-20) { $sign='<' }
-    print "$sign  ";
+    if($diff>$TOLERANCE) { $sign='>'}
+    elsif($diff<-$TOLERANCE) { $sign='<' }
+    push @signs,$sign;
   }
-  print "\n";
+  my ($flips,$randomFlips)=getFlips(\@signs);
+  print "$flips\t$randomFlips\n";
 }
 close(TRAJ);
 
 
 
+#=================================================================
+sub randomize {
+  my ($array)=@_;
+  my $random=[];
+  my $n=@$array;
+  for(my $i=0 ; $i<$n ; ++$i) { $random->[$i]=rand(1)<0.5 ? '<' : '>'}
+  return $random;
+}
+#=================================================================
+sub shuffle {
+  my ($array)=@_;
+  my $random=[];
+  @$random=@$array;
+  my $n=@$random;
+  for(my $i=0 ; $i<$n ; ++$i) {
+    my $j=int(rand($n));
+    my $tmp=$array->[$i];
+    $array->[$i]=$array->[$j];
+    $array->[$j]=$tmp;
+  }
+  return $random;
+}
+#=================================================================
+sub getFlips {
+  my ($signs)=@_;
+  #my $random=shuffle($signs);
+  my $random=randomize($signs);
+  my $flips=countFlips($signs);
+  my $randomFlips=countFlips($random);
+  return ($flips,$randomFlips);
+}
+#=================================================================
+sub countFlips {
+  my ($signs)=@_;
+  my $n=@$signs;
+  my $prev; my $flips=0;
+  for(my $i=0 ; $i<$n ; ++$i) {
+    my $sign=$signs->[$i];
+    if($sign ne "=") {
+      if(defined($prev)) { if($sign ne $prev) {++$flips} }
+      $prev=$sign;
+    }
+  }
+  return $flips;
+}
 #=================================================================
 sub parse {
   my ($file,$HMM)=@_;
