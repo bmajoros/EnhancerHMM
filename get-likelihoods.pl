@@ -16,6 +16,6 @@ while(<IN>) {
   print "$LL\t$file\n";
 }
 close(IN);
-
+print STDERR "[done]\n";
 
 

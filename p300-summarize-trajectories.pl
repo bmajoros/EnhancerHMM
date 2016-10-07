@@ -4,7 +4,7 @@ use SummaryStats;
 $|=1;
 
 my $BASE="/home/bmajoros/GGR/p300";
-my $TRAJECTORIES="$BASE/trajectories-1.txt";
+my $TRAJECTORIES="$BASE/trajectories-2.txt";
 
 my @times=(0,0.5,1,2,3,4,5,6,7,8,10,12);
 

@@ -1,13 +1,13 @@
 #!/usr/bin/perl
 use strict;
+use ProgramName;
 $|=1;
 
+my $name=ProgramName::get();
+die "$name <pos.hmm> <neg.hmm> <peaks.txt> <fastb-dir>\n" unless @ARGV==4;
+my ($ACTIVE_HMM,$INACTIVE_HMM,$PEAKS,$FASTB)=@ARGV;
+
 my $BASE="/home/bmajoros/GGR/p300";
-my $MODEL="$BASE/model";
-my $ACTIVE_HMM="$MODEL/trained-pos5.hmm";
-my $INACTIVE_HMM="$MODEL/trained-neg1.hmm";
-my $PEAKS="$BASE/peaks.txt";
-my $FASTB="$BASE/no-dna";
 my $MUMMIE=$ENV{"MUMMIE"};
 my $PRIOR1=log(0.5);
 my $PRIOR0=log(0.5);

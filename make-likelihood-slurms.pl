@@ -6,7 +6,7 @@ my $BASE="/home/bmajoros/GGR/p300";
 my $SLURM_DIR="$BASE/slurms/likelihood-slurms";
 my $PROGRAM="$BASE/src/get-likelihoods.pl";
 my $FASTB="$BASE/no-dna";
-my $HMM="$BASE/model/bootstrap-pos5.hmm";
+my $HMM="$BASE/model/bootstrap-neg1.hmm";
 
 my $writer=new SlurmWriter();
 my @lists=`ls $BASE/subsets`;
