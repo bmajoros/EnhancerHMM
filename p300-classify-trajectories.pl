@@ -13,7 +13,8 @@ while(<IN>) {
   chomp; my @fields=split; next unless @fields>=13;
   my $peak=shift @fields;
   my $class=classify(\@fields);
-  print "$peak\t$class\n";
+  #print "$peak\t$class\n";
+  print "$peak\t$class\t@fields\n";
 }
 close(IN);
 
@@ -27,8 +28,10 @@ sub classify {
   my $total=count($array,0,12);
   if($total>=11) { return "on" }
   if($total<=1) { return "off" }
-  if($firstHalf<=2 && $secondHalf>=4) { return "increasing" }
-  if($firstHalf>=4 && $secondHalf<=2) { return "decreasing" }
+#  if($firstHalf<=1 && $secondHalf>=5) { return "increasing" }
+#  if($firstHalf>=5 && $secondHalf<=1) { return "decreasing" }
+  if($firstHalf-$secondHalf>=3) { return "decreasing" }
+  elsif($secondHalf-$firstHalf>=3) { return "increasing" }
   return "ambiguous";
 }
 # =====================================================================
