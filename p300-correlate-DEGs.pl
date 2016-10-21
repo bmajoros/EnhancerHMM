@@ -6,10 +6,12 @@ $|=1;
 # Globals
 my $MAX_GENES=1178;
 my $BASE="/home/bmajoros/GGR/p300";
+my $ACTIVATING="$BASE/increasing-new-55.txt";
+my $DEACTIVATING="$BASE/decreasing-new-55.txt";
 #my $ACTIVATING="$BASE/increasing-pos5-neg1.txt";
 #my $DEACTIVATING="$BASE/decreasing-pos5-neg1.txt";
-my $ACTIVATING="$BASE/on-pos5-neg5.txt";
-my $DEACTIVATING="$BASE/off-pos5-neg5.txt";
+#my $ACTIVATING="$BASE/on-pos5-neg5.txt";
+#my $DEACTIVATING="$BASE/off-pos5-neg5.txt";
 my $PEAKS="$BASE/peaks.bed";
 my $UP_GENES="$BASE/genes/DEGs_upreg.FDR_0.01.TSS.protein_coding.bed";
 my $DOWN_GENES="$BASE/genes/DEGs_downreg.FDR_0.1.TSS.protein_coding.bed";
@@ -28,9 +30,9 @@ close(IN);
 
 # Load DEGs
 my %DEGs; my $numGenesLoaded;
-#loadGenes($UP_GENES,1,\%DEGs);
+loadGenes($UP_GENES,1,\%DEGs);
 #loadGenes($DOWN_GENES,-1,\%DEGs);
-loadGenes($NON_DEGS,0,\%DEGs);
+#loadGenes($NON_DEGS,0,\%DEGs);
 #print "$numGenesLoaded genes loaded\n";
 
 # Sort DEGs

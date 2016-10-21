@@ -10,9 +10,11 @@ from builtins import (bytes, dict, int, list, object, range, str, ascii,
    chr, hex, input, next, oct, open, pow, round, super, filter, map, zip)
 # The above imports should allow this program to run in both Python 2 and
 # Python 3.  You might need to update your version of module "future".
+import sys
 from Fastb import Fastb
 from Interval import Interval
 
+MAX_TRAJECTORIES=3000
 BASE="/home/bmajoros/GGR/p300/"
 MOTIF_DIR=BASE+"motif-tracks"
 PARSED_DIR=BASE+"parsed"
@@ -21,8 +23,10 @@ TIMEPOINTS=("t00","t05","t1","t2","t3","t4","t5","t6","t7","t8","t10","t12")
 
 peakHits={}
 humpHits={}
+flankHits={}
 totalPeakBases=0
 totalHumpBases=0
+totalFlankBases=0
 
 def loadMotifs(peak):
     filename=MOTIF_DIR+"/"+peak+".standardized_across_all_timepoints.t00.fastb"
@@ -36,38 +40,38 @@ def loadMotifs(peak):
         
 
 def parse(peak,time,motifs):
+    global totalFlankBases
+    global totalPeakBases
+    global totalHumpBases
     filename=PARSED_DIR+"/"+peak+".standardized_across_all_timepoints."+time+".fastb"
     fastb=Fastb(filename)
     track=fastb.getTrackByName("state")
     regions=track.getContiguousRegions()
     for region in regions:
         state=int(region.value)
-        if(state==2): analyzeHump(region,motifs)
-        elif(state==3): analyzePeak(region.motifs)
+        if(state==1): totalFlankBases+=analyze(region,motifs,flankHits)
+        elif(state==2): totalHumpBases+=analyze(region,motifs,humpHits)
+        elif(state==3): totalPeakBases+=analyze(region,motifs,peakHits)
 
-def analyzeHump(region,motifs):
-    totalHumpBases+=region.getLength()
+def analyze(region,motifs,hitsHash):
     for motifName in list(motifs.keys()):
         hits=motifs[motifName]
         for hit in hits:
             if(hit.overlaps(region)):
-                humpHits[motifName]+=1
+                if(not hitsHash.get(motifName,None)): hitsHash[motifName]=0
+                hitsHash[motifName]+=1
+    return region.getLength()
 
-def analyzePeak(region,motifs):
-    totalPeakBases+=region.getLength()
-    for motifName in list(motifs.keys()):
-        hits=motifs[motifName]
-        for hit in hits:
-            if(hit.overlaps(region)):
-                peakHits[motifName]+=1
-
-def getRatios(hash,length,label):
+def getRatios(hash,length):
+    ratios={}
     keys=list(hash.keys())
     for key in keys:
         numHits=hash[key]
         ratio=numHits/length
-        print(label,numHits,length,ratio)
+        ratios[key]=ratio
+    return ratios
 
+numProcessed=0
 with open(TRAJECTORIES,"rt") as TRAJ:
     for line in TRAJ:
         fields=line.split()
@@ -84,5 +88,23 @@ with open(TRAJECTORIES,"rt") as TRAJ:
         motifs=loadMotifs(peak)
         for time in times:
             parse(peak,time,motifs)
-getRatios(peakHits,totalPeakBases,"peaks")
-getRatios(humpHits,totalHumpBases,"humps")
+        numProcessed+=1
+        print(numProcessed,"trajectories processed",file=sys.stderr)
+        if(numProcessed>=MAX_TRAJECTORIES): break
+peakHash=getRatios(peakHits,totalPeakBases)
+humpHash=getRatios(humpHits,totalHumpBases)
+flankHash=getRatios(flankHits,totalFlankBases)
+keys=list(peakHash.keys())
+for key in keys:
+    peakRatio=peakHash.get(key,None)
+    humpRatio=humpHash.get(key,None)
+    if(peakRatio is None or humpRatio is None): exit("zero")
+    normalized=peakRatio/humpRatio
+    normalized=int(normalized*100.0+5.0/9.0)/100.0
+    flankRatio=flankHash.get(key,None)
+    if(flankRatio is None): exit("zero2")
+    normalized2=peakRatio/flankRatio
+    normalized2=int(normalized2*100.0+5.0/9.0)/100.0
+    print(key+"="+str(normalized)+" "+str(normalized2))
+
+

@@ -1,6 +1,7 @@
 #!/bin/env perl
 use strict;
 use ProgramName;
+$|=1;
 
 my $BASE="/home/bmajoros/GGR/p300";
 
@@ -22,6 +23,22 @@ close(IN);
 
 # =====================================================================
 sub classify {
+  my ($array)=@_;
+  my $string=join("",@$array);
+  if($string=~/^(0+)(1+)/) {
+    my $leftLen=length($1); my $rightLen=length($2);
+    if($leftLen>=2 && $rightLen>=4) { return "increasing" }
+    else { return "ambiguous" } }
+  if($string=~/^(1+)(0+)/) {
+    my $leftLen=length($1); my $rightLen=length($2);
+    if($leftLen>=2 && $rightLen>=4) { return "decreasing" }
+    else { return "ambiguous" } }
+  elsif($string=~/^0+$/) { return "off" }
+  elsif($string=~/^1+$/) { return "on" }
+  else { return "ambiguous" }
+}
+# =====================================================================
+sub classify_old {
   my ($array)=@_;
   my $firstHalf=count($array,0,6);
   my $secondHalf=count($array,6,12);
