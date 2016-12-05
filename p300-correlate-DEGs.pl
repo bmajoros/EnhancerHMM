@@ -30,8 +30,8 @@ close(IN);
 
 # Load DEGs
 my %DEGs; my $numGenesLoaded;
-loadGenes($UP_GENES,1,\%DEGs);
-#loadGenes($DOWN_GENES,-1,\%DEGs);
+#loadGenes($UP_GENES,1,\%DEGs);
+loadGenes($DOWN_GENES,-1,\%DEGs);
 #loadGenes($NON_DEGS,0,\%DEGs);
 #print "$numGenesLoaded genes loaded\n";
 

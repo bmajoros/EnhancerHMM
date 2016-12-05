@@ -28,6 +28,7 @@ totalPeakBases=0
 totalHumpBases=0
 totalFlankBases=0
 
+#=========================== FUNCTIONS =========================
 def loadMotifs(peak):
     filename=MOTIF_DIR+"/"+peak+".standardized_across_all_timepoints.t00.fastb"
     fastb=Fastb(filename)
@@ -71,6 +72,7 @@ def getRatios(hash,length):
         ratios[key]=ratio
     return ratios
 
+#=========================== main() =========================
 numProcessed=0
 with open(TRAJECTORIES,"rt") as TRAJ:
     for line in TRAJ:
@@ -95,16 +97,19 @@ peakHash=getRatios(peakHits,totalPeakBases)
 humpHash=getRatios(humpHits,totalHumpBases)
 flankHash=getRatios(flankHits,totalFlankBases)
 keys=list(peakHash.keys())
+print("factor\tpeak/hump\tpeak/flank\thump/flank")
 for key in keys:
+    # Analyze enrichment in peaks versus humps:
     peakRatio=peakHash.get(key,None)
     humpRatio=humpHash.get(key,None)
     if(peakRatio is None or humpRatio is None): exit("zero")
-    normalized=peakRatio/humpRatio
-    normalized=int(normalized*100.0+5.0/9.0)/100.0
+    normalized=int(peakRatio/humpRatio*100.0+5.0/9.0)/100.0
+    # Analyze enrichment in peaks versus flanks:
     flankRatio=flankHash.get(key,None)
     if(flankRatio is None): exit("zero2")
-    normalized2=peakRatio/flankRatio
-    normalized2=int(normalized2*100.0+5.0/9.0)/100.0
-    print(key+"="+str(normalized)+" "+str(normalized2))
+    normalized2=int(peakRatio/flankRatio*100.0+5.0/9.0)/100.0
+    normalized3=int(humpRatio/flankRatio*100.0+5.0/9.0)/100.0
+    # Analyze enrichment in humps versus flanks:
+    print(key+"\t"+str(normalized)+"\t"+str(normalized2)+"\t"+str(normalized3))
 
 
