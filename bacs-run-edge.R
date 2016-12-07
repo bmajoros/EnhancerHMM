@@ -1,9 +1,12 @@
 #!/data/reddylab/software/miniconda2/bin/Rscript
 # #!/bin/env Rscript
-library(edgeR)
-
 args <-commandArgs(TRUE)
+if(length(args)!=2) {
+    cat("usage: edgeR-intput.txt out.parms\n")
+    q(status=1)
+}
 
+library(edgeR)
 mat <- args[1]
 y_mat_and_dispersion_out <- args[2]
 
