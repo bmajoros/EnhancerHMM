@@ -1,31 +1,50 @@
 #!/data/reddylab/software/miniconda2/bin/Rscript
 # #!/bin/env Rscript
+options(max.print = 99999999)
+options(width=500)
+
 args <-commandArgs(TRUE)
-if(length(args)!=2) {
-    cat("usage: edgeR-intput.txt out.parms\n")
+if(length(args)!=3) {
+    cat("usage: edgeR-full-inputs.txt egdeR-thinned.txt out.parms\n")
     q(status=1)
 }
 
 library(edgeR)
-mat <- args[1]
-y_mat_and_dispersion_out <- args[2]
+fullmat <- args[1]
+mat <- args[2]
+y_mat_and_dispersion_out <- args[3]
 
 mat <- read.table(mat, header = T, row.names=1, sep='\t')
-factors <- factor(c("DNA","ETH","ETH","ETH","DEX","DEX","DEX"))
+fullmat <- read.table(fullmat,header=T,row.names=1,sep='\t')
 
+factors <- factor(c("DNA","ETH","ETH","ETH","DEX","DEX","DEX"))
 model_design <- model.matrix(~factors)
 
-print(paste('Observations, =', min(dim(model_design))))
-print(paste('Parameters to estimate, =',qr(model_design)$rank))
-
-####
+# Estimate common dispersion from the thinned data
 y <- DGEList(counts = mat, group = factors)
-
 y <- calcNormFactors(y, design=model_design)
 y <- estimateGLMCommonDisp(y, design=model_design)
-y <- estimateGLMTrendedDisp(y, design=model_design) 
-y <- estimateGLMTagwiseDisp(y, design=model_design)
+y <- estimateGLMTrendedDisp(y, design=model_design)
+common <- y$common.dispersion
+trended <- y$trended.dispersion
 
+# Up-sample the trended values to the full matrix
+n <- nrow(fullmat)
+fulltrend <- 1:n
+for(i in 1:n) {
+    fulltrend[[i]] <- trended[[as.integer(i/350)+1]]
+}
+
+# Estimate tagwise dispersion from the full data
+y <- DGEList(counts = fullmat, group = factors)
+y <- calcNormFactors(y, design=model_design)
+y$common.dispersion <- common
+y$trended.dispersion <- fulltrend
+y <- estimateGLMTagwiseDisp(y, design=model_design)
 saveRDS(y, y_mat_and_dispersion_out)
 
+# Fit GLM model and perform likelihood ratio tests
+fit <- glmFit(y, model_design)
+de <- as.data.frame(topTags(glmLRT(fit, coef=2), n=dim(y)[1]))
+print(de)
 
