@@ -45,6 +45,14 @@ saveRDS(y, y_mat_and_dispersion_out)
 
 # Fit GLM model and perform likelihood ratio tests
 fit <- glmFit(y, model_design)
+cat("writing eth")
+sink("edgeR-eth.txt")
 de <- as.data.frame(topTags(glmLRT(fit, coef=2), n=dim(y)[1]))
 print(de)
+sink()
+cat("writing dex")
+sink("edgeR-dex.txt")
+de <- as.data.frame(topTags(glmLRT(fit, coef=3), n=dim(y)[1]))
+print(de)
+sink()
 
