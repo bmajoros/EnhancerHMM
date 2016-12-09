@@ -22,20 +22,21 @@ maxParallel=500
 memory=40000
 jobName="STAR"
 BASE="/home/bmajoros/GGR/bacs"
-dnaFastqDir="/gpfs/fs0/data/reddylab/Flowcells/Project_Vockley_709_131016"
-rnaFastqDir1="/data/reddylab/Flowcells/Project_Vockley_743_131102"
-rnaFastqDir2="/data/reddylab/Flowcells/Project_Vockley_744_131108"
+#dnaFastqDir="/gpfs/fs0/data/reddylab/Flowcells/Project_Vockley_709_131016"
+#rnaFastqDir1="/data/reddylab/Flowcells/Project_Vockley_743_131102"
+#rnaFastqDir2="/data/reddylab/Flowcells/Project_Vockley_744_131108"
+fastqDir=BASE+"/fastq"
 slurmDir=BASE+"/star-slurms"
 starIndex=BASE+"/STAR"
 outputDir=starIndex+"/output"
 slurm=SlurmWriter()
 
 def process(fastqDir,tag):
-    files=glob.glob(fastqDir+"/CV*.fastq")
+    files=glob.glob(fastqDir+"/*.fastq")
     for file in files:
-        if(not rex.find("(\S+)R1_001.fastq",file)): continue
-        pair=rex[1]+"R2_001.fastq"
-        if(not rex.find("([^/]+)_R1_001.fastq",file)): raise Exception("")
+        if(not rex.find("(\S+)Read1.fastq",file)): continue
+        pair=rex[1]+"Read2.fastq"
+        if(not rex.find("([^/]+)[_-]Read1.fastq",file)): raise Exception("")
         filestem=rex[1]+tag
         cmd=STAR+" --genomeLoad LoadAndKeep --genomeDir "+starIndex+" --readFilesIn "+file+" "+pair+" --outFileNamePrefix "+filestem+" --runThreadN "+str(numThreads)
         slurm.addCommand(cmd)
@@ -43,9 +44,10 @@ def process(fastqDir,tag):
 #=========================================================================
 #                               main()
 #=========================================================================
-process(dnaFastqDir,"")
-process(rnaFastqDir1,"_x1")
-process(rnaFastqDir2,"_x2")
+#process(dnaFastqDir,"")
+#process(rnaFastqDir1,"_x1")
+#process(rnaFastqDir2,"_x2")
+process(fastqDir,"")
 slurm.mem(memory)
 slurm.threads(numThreads)
 slurm.setQueue("new,all")
