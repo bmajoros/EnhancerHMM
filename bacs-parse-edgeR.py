@@ -62,6 +62,7 @@ if(len(sys.argv)!=4):
     exit(sys.argv[0]+" <bac-lengths.txt> <in.eth> <in.dex>")
 (lengthsFile,ethFile,dexFile)=sys.argv[1:]
 
+# Process ETHANOL
 hash={}
 with open(lengthsFile,"rt") as IN:
     for line in IN:
@@ -70,16 +71,33 @@ with open(lengthsFile,"rt") as IN:
         (chr,L)=fields
         hash[chr]=[0]*int(L)
 load(ethFile,hash)
-load(dexFile,hash)
-totalElements=0
 chroms=hash.keys()
 for chr in chroms:
     array=hash[chr]
     L=len(array)
-    totalElements+=countElements(array,L,MIN_SIZE)
-    outfile=chr+".fastb"
+    outfile="eth-"+chr+".fastb"
     with open(outfile,"wt") as OUT:
         OUT.write("%logFC\n")
         for i in range(L):
             OUT.write(str(array[i])+"\n")
-#print(totalElements,"elements found")
+
+# Process DEX
+hash={}
+with open(lengthsFile,"rt") as IN:
+    for line in IN:
+        fields=line.split()
+        if(len(fields)!=2): continue
+        (chr,L)=fields
+        hash[chr]=[0]*int(L)
+load(dexFile,hash)
+chroms=hash.keys()
+for chr in chroms:
+    array=hash[chr]
+    L=len(array)
+    outfile="dex-"+chr+".fastb"
+    with open(outfile,"wt") as OUT:
+        OUT.write("%logFC\n")
+        for i in range(L):
+            OUT.write(str(array[i])+"\n")
+
+

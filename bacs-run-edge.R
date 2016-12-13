@@ -17,7 +17,8 @@ y_mat_and_dispersion_out <- args[3]
 mat <- read.table(mat, header = T, row.names=1, sep='\t')
 fullmat <- read.table(fullmat,header=T,row.names=1,sep='\t')
 
-factors <- factor(c("DNA","ETH","ETH","ETH","DEX","DEX","DEX"))
+# These need to be alphabetic because model.matrix() sorts them...
+factors <- factor(c("A_DNA","B_ETH","B_ETH","B_ETH","C_DEX","C_DEX","C_DEX"))
 model_design <- model.matrix(~factors)
 
 # Estimate common dispersion from the thinned data
