@@ -25,7 +25,7 @@ def findElements(array):
     begin=array[0][0]
     for i in range(1,L):
         if(array[i][0]!=array[i-1][0]+1):
-            elements.append([begin,array[i][0]])
+            elements.append([begin,array[i-1][0]+1])
             begin=array[i][0]
     return elements
 
