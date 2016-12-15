@@ -54,11 +54,11 @@ while(True):
     sliceFastb(record,"t3","slice3.fastb")
     posterior0=getPosterior("slice0.fastb")
     posterior3=getPosterior("slice3.fastb")
-    #print(posterior0,posterior3)
-    if(posterior0<0.5 and posterior3>0.5):
+    #if(posterior0<0.1 and posterior3>0.9):
+    if(posterior3>0.9):
         id="elem"+str(nextID)
         nextID+=1
-        print(record.chr+"\t"+str(record.interval.begin)+"\t"+str(record.interval.end)+"\t"+id+"\t"+str(posterior3-posterior0))
+        print(record.chr+"\t"+str(record.interval.begin)+"\t"+str(record.interval.end)+"\t"+id+"\t"+str(posterior3-posterior0),sep="\t")
 reader.close()
 
 
