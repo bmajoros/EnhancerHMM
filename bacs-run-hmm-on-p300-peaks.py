@@ -11,20 +11,27 @@ from builtins import (bytes, dict, int, list, object, range, str, ascii,
 # The above imports should allow this program to run in both Python 2 and
 # Python 3.  You might need to update your version of module "future".
 import os
+import sys
 import math
 from BedReader import BedReader
 from Pipe import Pipe
 import SumLogProbs
 from Interval import Interval
+import ProgramName
+import TempFilename
 from Rex import Rex
 rex=Rex()
 
-timepoint="t00"
+if(len(sys.argv)!=3):
+    exit(ProgramName.get()+" <t00 or t3> <min-elem-length>\n")
+(timepoint,minLen)=sys.argv[1:]
+minLen=int(minLen)
 
-minHump=10
-minPeak=20
-minLen=50
-HALF_WIDTH=500
+#timepoint="t00"
+#minLen=200
+minHump=1
+minPeak=1
+#HALF_WIDTH=250
 fgPrior=math.log(0.5)
 bgPrior=math.log(0.5)
 BASE="/home/bmajoros/GGR/bacs"
@@ -36,9 +43,12 @@ SCHEMA=BASE+"/hmm/p300.schema"
 fastbDir=BASE+"/fastb"
 
 def sliceFastb(record,timepoint,outfile):
-    center=int((record.interval.begin+record.interval.end)/2)
-    begin=center-HALF_WIDTH
-    end=center+HALF_WIDTH
+    begin=int(record.interval.begin)
+    end=int(record.interval.end)
+    #if(end-begin<400):
+    #    center=int((begin+end)/2)
+    #    begin=center-HALF_WIDTH
+    #    end=center+HALF_WIDTH
     cmd=MUMMIE+"/fastb-slice "+SCHEMA+" "+fastbDir+"/"+record.chr+"."+timepoint+".fastb "+str(begin)+" "+str(end)+" "+outfile
     os.system(cmd)
 
@@ -115,19 +125,23 @@ def applyConstraints(hmm,fastb,minHump,minPeak,minLen):
     path=getPath(hmm,fastb)
     return satisfiesConstraints(path,minHump,minPeak,minLen)
 
+#=========================================================================
+# main()
+#=========================================================================
+tempFile=TempFilename.generate(".fastb")
 nextID=1
 reader=BedReader(P300_BED)
 while(True):
     record=reader.nextRecord()
     if(not record): break
-    sliceFastb(record,timepoint,"slice.fastb")
-    if(not applyConstraints(fgHMM,"slice.fastb",minHump,minPeak,minLen)):
+    sliceFastb(record,timepoint,tempFile)
+    if(not applyConstraints(fgHMM,tempFile,minHump,minPeak,minLen)):
         continue
-    posterior=getPosterior("slice.fastb")
+    posterior=getPosterior(tempFile)
     if(posterior>0.9):
         id="elem"+str(nextID)
         nextID+=1
         print(record.chr+"\t"+str(record.interval.begin)+"\t"+str(record.interval.end)+"\t"+id+"\t"+str(posterior),sep="\t",flush=True)
 reader.close()
-
+os.remove(tempFile)
 
