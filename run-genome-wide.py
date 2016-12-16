@@ -21,36 +21,7 @@ import ProgramName
 import TempFilename
 from Rex import Rex
 rex=Rex()
-
-if(len(sys.argv)!=3):
-    exit(ProgramName.get()+" <t00 or t3> <min-elem-length>\n")
-(timepoint,minLen)=sys.argv[1:]
-minLen=int(minLen)
-
-MIN_LLR=100
-#timepoint="t00"
-minHump=1
-minPeak=1
-#HALF_WIDTH=250
-fgPrior=math.log(0.5)
-bgPrior=math.log(0.5)
-BASE="/home/bmajoros/GGR/bacs"
-fgHMM=BASE+"/hmm/trained-pos5.hmm"
-bgHMM=BASE+"/hmm/trained-neg1.hmm"
-P300_BED=BASE+"/p300-bacs-white.bed"
 MUMMIE=os.environ["MUMMIE"]
-SCHEMA=BASE+"/hmm/p300.schema"
-fastbDir=BASE+"/fastb"
-
-def sliceFastb(record,timepoint,outfile):
-    begin=int(record.interval.begin)
-    end=int(record.interval.end)
-    #if(end-begin<400):
-    #    center=int((begin+end)/2)
-    #    begin=center-HALF_WIDTH
-    #    end=center+HALF_WIDTH
-    cmd=MUMMIE+"/fastb-slice "+SCHEMA+" "+fastbDir+"/"+record.chr+"."+timepoint+".fastb "+str(begin)+" "+str(end)+" "+outfile
-    os.system(cmd)
 
 def getLL(fastb,hmm):
     cmd=MUMMIE+"/get-likelihood "+hmm+" "+fastb
@@ -110,7 +81,8 @@ def getSections(path):
         if(eLen==0 or elem[eLen-1]==state): elem.append(state)
         else:
             sections.append(elem)
-            elem=[]
+            elem=[state]
+    if(len(elem)>0): sections.append(elem)
     return sections
 
 def satisfiesConstraints(path,minHump,minPeak,minTotal):
@@ -126,30 +98,87 @@ def satisfiesConstraints(path,minHump,minPeak,minTotal):
     if(totalLen<minTotal): return False
     return True
 
+def getForegroundLen(path):
+    sections=getSections(path)
+    totalLen=0
+    for section in sections:
+        L=len(section)
+        type=section[0]
+        #print("\t"+str(type)+"\t"+str(L))
+        if(type>1 and type<5): totalLen+=L
+    return totalLen
+
+def getForeground(path):
+    sections=getSections(path)
+    begin=None
+    end=None
+    pos=0
+    for section in sections:
+        L=len(section)
+        type=section[0]
+        if(type>1 and type<5):
+            if(begin is None): begin=pos
+        elif(type==5): end=pos
+        pos+=L
+    if(end is None): end=pos
+    return (begin,end)
+
 def applyConstraints(hmm,fastb,minHump,minPeak,minLen):
     path=getPath(hmm,fastb)
     return satisfiesConstraints(path,minHump,minPeak,minLen)
 
+def process(dir,posHMM,negHMM,label):
+  files=os.listdir()
+  n=len(files)
+  for i in range(n):
+    file=files[i]
+    file=file.rstrip()
+    if(not rex.find(".fastb",file)): continue
+    numer=getLL(file,posHMM)
+    denom=getLL(file,negHMM)
+    ratio=numer-denom
+    ROC.write(str(ratio)+"\t"+str(label)+"\n")
+
+def getParse(path):
+    sections=getSections(path)
+    if(len(sections)!=5):
+        print(path)
+        print(sys.argv)
+        exit("cannot find five states in parse")
+    parse=""
+    pos=0
+    for section in sections:
+        L=len(section)
+        type=section[0]
+        if(type>1 and type<5):
+            if(len(parse)>0): parse+=":"
+            begin=pos
+            end=pos+L
+            parse+=str(begin)+"-"+str(end)
+        pos+=L
+    return parse
+
 #=========================================================================
 # main()
 #=========================================================================
-tempFile=TempFilename.generate(".fastb")
+if(len(sys.argv)!=6):
+    exit(ProgramName.get()+" <list.txt> <fastb-dir> <pos.hmm> <neg.hmm> <taskID>\n")
+(fileList,inDir,fgHMM,bgHMM,taskID)=sys.argv[1:]
+files=[]
+with open(fileList,"rt") as IN:
+    for line in IN:
+        files.append(line.rstrip())
 nextID=1
-reader=BedReader(P300_BED)
-while(True):
-    record=reader.nextRecord()
-    if(not record): break
-    sliceFastb(record,timepoint,tempFile)
-    if(not applyConstraints(fgHMM,tempFile,minHump,minPeak,minLen)):
-        continue
-    #posterior=getPosterior(tempFile)
-    #if(posterior>0.9):
-    llr=getLLR(tempFile)
-    if(llr>MIN_LLR):
-        id="elem"+str(nextID)
-        nextID+=1
-        #print(record.chr+"\t"+str(record.interval.begin)+"\t"+str(record.interval.end)+"\t"+id+"\t"+str(posterior),sep="\t",flush=True)
-        print(record.chr+"\t"+str(record.interval.begin)+"\t"+str(record.interval.end)+"\t"+id+"\t"+str(llr),sep="\t",flush=True)
-reader.close()
-os.remove(tempFile)
+for file in files:
+    fullPath=inDir+"/"+file
+    path=getPath(fgHMM,fullPath)
+    (begin,end)=getForeground(path)
+    parse=getParse(path)
+    L=end-begin
+    llr=getLLR(fullPath)
+    id="task"+taskID+"_elem"+str(nextID)
+    print(file+"\t"+str(begin)+"\t"+str(end)+"\t"+id+"\t"+str(llr)+"\t"+parse,
+          flush=True)
+    nextID+=1
 
+#########################################################################

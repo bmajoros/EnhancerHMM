@@ -22,13 +22,12 @@ import TempFilename
 from Rex import Rex
 rex=Rex()
 
-if(len(sys.argv)!=3):
-    exit(ProgramName.get()+" <t00 or t3> <min-elem-length>\n")
-(timepoint,minLen)=sys.argv[1:]
-minLen=int(minLen)
+if(len(sys.argv)!=6):
+    exit(ProgramName.get()+" <pos-dir> <neg-dir> <pos.hmm> <neg.hmm> <min-len>\n")
+(posDir,negDir,posHMM,negHMM,minLen)=sys.argv[1:]
 
-MIN_LLR=100
 #timepoint="t00"
+#minLen=200
 minHump=1
 minPeak=1
 #HALF_WIDTH=250
@@ -66,11 +65,6 @@ def getPosterior(fastb):
     denom=SumLogProbs.sumLogProbs2(jointBG,jointFG)
     posterior=math.exp(jointFG-denom)
     return posterior
-
-def getLLR(fastb):
-    fgLL=getLL(fastb,fgHMM)
-    bgLL=getLL(fastb,bgHMM)
-    return fgLL-bgLL
 
 def getPath(hmm,fastb):
     array=[]
@@ -130,6 +124,18 @@ def applyConstraints(hmm,fastb,minHump,minPeak,minLen):
     path=getPath(hmm,fastb)
     return satisfiesConstraints(path,minHump,minPeak,minLen)
 
+def process(dir,posHMM,negHMM,label):
+  files=os.listdir()
+  n=len(files)
+  for i in range(n):
+    file=files[i]
+    file=file.rstrip()
+    if(not rex.find(".fastb",file)): continue
+    numer=getLL(file,posHMM)
+    denom=getLL(file,negHMM)
+    ratio=numer-denom
+    ROC.write(str(ratio)+"\t"+str(label)+"\n")
+
 #=========================================================================
 # main()
 #=========================================================================
@@ -142,14 +148,17 @@ while(True):
     sliceFastb(record,timepoint,tempFile)
     if(not applyConstraints(fgHMM,tempFile,minHump,minPeak,minLen)):
         continue
-    #posterior=getPosterior(tempFile)
-    #if(posterior>0.9):
-    llr=getLLR(tempFile)
-    if(llr>MIN_LLR):
+    posterior=getPosterior(tempFile)
+    if(posterior>0.9):
         id="elem"+str(nextID)
         nextID+=1
-        #print(record.chr+"\t"+str(record.interval.begin)+"\t"+str(record.interval.end)+"\t"+id+"\t"+str(posterior),sep="\t",flush=True)
-        print(record.chr+"\t"+str(record.interval.begin)+"\t"+str(record.interval.end)+"\t"+id+"\t"+str(llr),sep="\t",flush=True)
+        print(record.chr+"\t"+str(record.interval.begin)+"\t"+str(record.interval.end)+"\t"+id+"\t"+str(posterior),sep="\t",flush=True)
 reader.close()
 os.remove(tempFile)
 
+open(ROC,">$ROC") || die "can't write to file: $ROC\n";
+process($posDir,$posHMM,$negHMM,1);
+process($negDir,$posHMM,$negHMM,0);
+close(ROC);
+
+#########################################################################
