@@ -18,8 +18,10 @@ BASE="/home/bmajoros/GGR/p300"
 SLURM_DIR=BASE+"/slurms/genomewide-slurms"
 PROGRAM=BASE+"/src/run-genome-wide.py"
 FASTB=BASE+"/no-dna"
-POS_HMM=BASE+"/model/trained-pos5.hmm"
-NEG_HMM=BASE+"/model/trained-neg1.hmm"
+#POS_HMM=BASE+"/model/trained-pos5.hmm"
+POS_HMM=BASE+"/model/unsupervised-fg.hmm"
+#NEG_HMM=BASE+"/model/trained-neg1.hmm"
+NEG_HMM=BASE+"/model/unsupervised-bg.hmm"
 PARTITIONS=BASE+"/partitions"
 
 writer=SlurmWriter()

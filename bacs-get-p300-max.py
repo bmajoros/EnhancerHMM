@@ -19,6 +19,7 @@ import SumLogProbs
 from Interval import Interval
 import ProgramName
 import TempFilename
+from Fastb import Fastb
 from Rex import Rex
 rex=Rex()
 
@@ -37,16 +38,16 @@ P300_BED=BASE+"/p300-bacs-white.bed"
 MUMMIE=os.environ["MUMMIE"]
 
 # P300 only:
-#fgHMM=BASE+"/hmm/p300-only.hmm"
-#bgHMM=BASE+"/hmm/bg-p300-only.hmm"
-#fastbDir=BASE+"/fastb-p300-only"
-#SCHEMA=BASE+"/hmm/p300-only.schema"
+fgHMM=BASE+"/hmm/p300-only.hmm"
+bgHMM=BASE+"/hmm/bg-p300-only.hmm"
+fastbDir=BASE+"/fastb-p300-only"
+SCHEMA=BASE+"/hmm/p300-only.schema"
 
 # Full model:
-fgHMM=BASE+"/hmm/trained-pos5.hmm"
-bgHMM=BASE+"/hmm/trained-neg1.hmm"
-fastbDir=BASE+"/fastb"
-SCHEMA=BASE+"/hmm/p300.schema"
+#fgHMM=BASE+"/hmm/trained-pos5.hmm"
+#bgHMM=BASE+"/hmm/trained-neg1.hmm"
+#fastbDir=BASE+"/fastb"
+#SCHEMA=BASE+"/hmm/p300.schema"
 
 def sliceFastb(record,timepoint,outfile):
     begin=int(record.interval.begin)
@@ -136,6 +137,12 @@ def applyConstraints(hmm,fastb,minHump,minPeak,minLen):
     path=getPath(hmm,fastb)
     return satisfiesConstraints(path,minHump,minPeak,minLen)
 
+def getMax(fastbFile):
+    fastb=Fastb(fastbFile)
+    track=fastb.getTrackByName("EP300")
+    score=track.getMax()
+    return score
+
 #=========================================================================
 # main()
 #=========================================================================
@@ -146,14 +153,10 @@ while(True):
     record=reader.nextRecord()
     if(not record): break
     sliceFastb(record,timepoint,tempFile)
-    llr=getLLR(tempFile)
-    if(not applyConstraints(fgHMM,tempFile,minHump,minPeak,minLen)):
-        llr=-5000
-    #if(llr<MIN_LLR): llr=-5000
-    if(True):
-        id="elem"+str(nextID)
-        nextID+=1
-        print(record.chr+"\t"+str(record.interval.begin)+"\t"+str(record.interval.end)+"\t"+id+"\t"+str(llr),sep="\t",flush=True)
+    id="elem"+str(nextID)
+    nextID+=1
+    p300=getMax(tempFile)
+    print(record.chr+"\t"+str(record.interval.begin)+"\t"+str(record.interval.end)+"\t"+id+"\t"+str(p300),sep="\t",flush=True)
 reader.close()
 os.remove(tempFile)
 
