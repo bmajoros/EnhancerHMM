@@ -15,15 +15,32 @@ import ProgramName
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+from matplotlib import cm
 
-if(len(sys.argv)!=2):
-    exit(ProgramName.get()+" <trajectories.tsv>\n")
-infile=sys.argv[1]
+if(len(sys.argv)!=3):
+    exit(ProgramName.get()+" <clusters.tsv> <cluster-sizes.tsv>\n")
+(clusterFile,sizeFile)=sys.argv[1:]
 
-df=pd.read_csv(infile,sep="\t")
+df=pd.read_csv(clusterFile,sep="\t",header=None)
+sizes=pd.read_csv(sizeFile,sep="\t",header=None)
 
-plt.imshow(df, cmap='hot', interpolation='nearest')
+#print(sizes)
+#print(df)
+#df=[x for (y,x) in sorted(zip(sizes,df), key=lambda pair: pair[0])]
+#print(df)
+#df=pd.DataFrame(df)
+#print(df)
+
+#columns=df.columns.values
+#columns[0]='a'
+#df.columns=columns
+#df.sort_values(by='a',inplace=True)
+
+plt.imshow(df, cmap=cm.Reds, interpolation='nearest')
 plt.colorbar()  
 plt.savefig("heatmap.pdf")
 
+plt.imshow(sizes, cmap=cm.Blues, interpolation='nearest')
+plt.colorbar()  
+plt.savefig("sizes.pdf")
 
