@@ -36,6 +36,17 @@ sizes=pd.read_csv(sizeFile,sep="\t",header=None)
 #df.columns=columns
 #df.sort_values(by='a',inplace=True)
 
+#GR=pd.read_csv("GR-Pvalues.txt",sep="\t",header=None)
+#CEBP=pd.read_csv("CEBP-Pvalues.txt",sep="\t",header=None)
+#AP1=pd.read_csv("AP1-Pvalues.txt",sep="\t",header=None)
+#GR['cebp']=CEBP
+#GR['ap1']=AP1
+#plt.imshow(GR, cmap=cm.Blues, interpolation='nearest', extent=[0,10,0,10])
+#plt.imshow(GR, cmap=cm.Blues, interpolation='nearest',vmin=0,vmax=10)
+#plt.colorbar()  
+#plt.savefig("test.pdf")
+#exit()
+
 plt.imshow(df, cmap=cm.Reds, interpolation='nearest')
 plt.colorbar()  
 plt.savefig("heatmap.pdf")
@@ -43,4 +54,13 @@ plt.savefig("heatmap.pdf")
 plt.imshow(sizes, cmap=cm.Blues, interpolation='nearest')
 plt.colorbar()  
 plt.savefig("sizes.pdf")
+
+GR=pd.read_csv("GR-Pvalues.txt",sep="\t",header=None)
+CEBP=pd.read_csv("CEBP-Pvalues.txt",sep="\t",header=None)
+AP1=pd.read_csv("AP1-Pvalues.txt",sep="\t",header=None)
+GR['cebp']=CEBP
+GR['ap1']=AP1
+plt.imshow(GR, cmap=cm.Blues, interpolation='nearest')
+plt.colorbar()  
+plt.savefig("GR-heatmap.pdf")
 
