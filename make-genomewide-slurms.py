@@ -18,10 +18,10 @@ BASE="/home/bmajoros/GGR/p300"
 SLURM_DIR=BASE+"/slurms/genomewide-slurms"
 PROGRAM=BASE+"/src/run-genome-wide.py"
 FASTB=BASE+"/no-dna"
-#POS_HMM=BASE+"/model/trained-pos5.hmm"
-POS_HMM=BASE+"/model/unsupervised-fg.hmm"
-#NEG_HMM=BASE+"/model/trained-neg1.hmm"
-NEG_HMM=BASE+"/model/unsupervised-bg.hmm"
+POS_HMM=BASE+"/model/trained-pos5.hmm"
+#POS_HMM=BASE+"/model/unsupervised-fg.hmm"
+NEG_HMM=BASE+"/model/trained-neg1.hmm"
+#NEG_HMM=BASE+"/model/unsupervised-bg.hmm"
 PARTITIONS=BASE+"/partitions"
 
 writer=SlurmWriter()
@@ -31,7 +31,7 @@ for list in lists:
   if(not rex.find("(\d+)\.txt$",list)): continue
   ID=rex[1]
   infile=PARTITIONS+"/"+list
-  outfile=BASE+"/genomewide-"+ID+".txt"
+  outfile=BASE+"/genomewide/genomewide-"+ID+".txt"
   writer.addCommand(PROGRAM+" "+PARTITIONS+"/"+list+" "+FASTB+" "
                     +POS_HMM+" "+NEG_HMM+" "+ID+" > "+outfile)
 writer.mem(5000)

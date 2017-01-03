@@ -48,7 +48,9 @@ for line in IN:
     fullPath=fastbDir+"/"+file
     id="elem"+str(nextID)
     nextID+=1
-    p300=getMax(fullPath)
-    print(file,1,2000,id,p300,".",sep="\t")
+    (p300,pos)=getMax(fullPath)
+    begin=pos-200
+    end=pos+200
+    print(file,begin,end,id,p300,".",sep="\t")
 IN.close()
 

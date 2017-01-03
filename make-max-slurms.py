@@ -27,12 +27,12 @@ for list in lists:
   if(not rex.find("(\d+)\.txt$",list)): continue
   ID=rex[1]
   infile=PARTITIONS+"/"+list
-  outfile=BASE+"/max-"+ID+".txt"
+  outfile=BASE+"/max/max-"+ID+".txt"
   writer.addCommand(PROGRAM+" "+PARTITIONS+"/"+list+" > "+outfile)
 writer.mem(5000)
 writer.nice(500)
 writer.setQueue("new,all")
-writer.writeArrayScript(SLURM_DIR,"P300",SLURM_DIR,500)
+writer.writeArrayScript(SLURM_DIR,"MAX",SLURM_DIR,500)
 
 
 

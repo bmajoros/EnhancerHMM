@@ -32,6 +32,8 @@ def readBySubstrate(filename):
         if(hash.get(substrate,None) is None):
             hash[substrate]=[]
         hash[substrate].append(rec)
+    #for key in hash.keys():
+    #    hash[key].sort(key=lambda x: x.score)
     return hash
 
 def getAllScores(hash):
@@ -60,7 +62,9 @@ def getThresholds(scores):
 
 def filter(predictions,threshold):
     filtered=[]
-    for prediction in predictions:
+    numPred=len(predictions)
+    for i in range(numPred):
+        prediction=predictions[i]
         if(prediction.score>=threshold):
             filtered.append(prediction)
     return filtered
