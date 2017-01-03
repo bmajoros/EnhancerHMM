@@ -12,6 +12,8 @@ from builtins import (bytes, dict, int, list, object, range, str, ascii,
 # Python 3.  You might need to update your version of module "future".
 import os
 import TempFilename
+from Fastb import Fastb
+from FastbTrack import FastbTrack
 
 # GLOBALS
 BASE="/home/bmajoros/GGR/delta"
@@ -39,12 +41,26 @@ def process(listfile,outdir):
     for file in files:
         copyTo(file,outdir)
 
+def makeDiscreteTrack(oldTrack):
+    data=""
+    for elem in oldTrack.data:
+        if(elem>0): data+="1"
+        else: data+="0"
+    newTrack=FastbTrack("discrete",oldTrack.id,data,oldTrack.deflineExtra)
+    return newTrack
+
 def getMotifTrack(peak,outfile):
     program=MUMMIE+"/fastb-extract-tracks.pl"
     motifFastb=MOTIF_TRACKS+"/"+peak+\
         ".standardized_across_all_timepoints.t00.fastb"
     cmd=program+" "+motifFastb+" "+outfile+" GR/AR/MR"
     os.system(cmd)
+    fastb=Fastb(outfile)
+    motifTrack=fastb.getTrackByName("GR/AR/MR")
+    newTrack=makeDiscreteTrack(motifTrack)
+    fastb.dropTrack("GR/AR/MR")
+    fastb.addTrack(newTrack)
+    fastb.save(outfile)
 
 def renameTrack(filename,oldName,newName):
     cmd=MUMMIE+"/fastb-rename-track.pl "+filename+" "+oldName+" "+newName
