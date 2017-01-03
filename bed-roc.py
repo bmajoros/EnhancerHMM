@@ -13,11 +13,11 @@ from builtins import (bytes, dict, int, list, object, range, str, ascii,
 import sys
 from BedReader import BedReader
 
-#def find(fromElem,foundIn):
-#    for elem in foundIn:
-#        if(fromElem.interval.overlaps(elem.interval)):
-#            return 1
-#    return 0
+def find(fromElem,foundIn):
+    for elem in foundIn:
+        if(fromElem.interval.overlaps(elem.interval)):
+            return 1
+    return 0
 
 def readBySubstrate(filename):
     hash={}
@@ -35,9 +35,19 @@ if(len(sys.argv)!=3):
 
 predictionsHash=readBySubstrate(predictionsFile)
 goldHash=readBySubstrate(goldFile)
-#for prediction in predictions:
-#    category=find(prediction,gold)
-#    print(str(prediction.score)+"\t"+str(category))
+
+###
+if(False):
+    keys=goldHash.keys()
+    for key in keys:
+        if(predictionsHash.get(key,None) is None): continue
+        predictions=predictionsHash[key]
+        gold=goldHash[key]
+        for prediction in predictions:
+            category=find(prediction,gold)
+            print(str(prediction.score)+"\t"+str(category))
+    exit()
+###
 
 keys=goldHash.keys()
 for key in keys:
@@ -53,7 +63,7 @@ for key in keys:
         if(prediction.interval.overlaps(gold[g].interval)):
             print(str(prediction.score)+"\t1")
             p+=1
-            g+=1
+            #g+=1
             continue
         if(prediction.interval.end<=gold[g].interval.begin):
             print(str(prediction.score)+"\t0")
@@ -65,3 +75,7 @@ for key in keys:
         print(prediction.toString())
         print(gold[g].toString())
         raise Exception("internal error")
+    while(p<numPred):
+        prediction=predictions[p]
+        print(str(prediction.score)+"\t0")
+        p+=1

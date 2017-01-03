@@ -27,7 +27,7 @@ if(len(sys.argv)!=3):
 (timepoint,minLen)=sys.argv[1:]
 minLen=int(minLen)
 
-MIN_LLR=100
+MIN_LLR=0 #100
 minHump=1
 minPeak=1
 fgPrior=math.log(0.5)
@@ -149,11 +149,13 @@ while(True):
     llr=getLLR(tempFile)
     if(not applyConstraints(fgHMM,tempFile,minHump,minPeak,minLen)):
         llr=-5000
-    #if(llr<MIN_LLR): llr=-5000
-    if(True):
-        id="elem"+str(nextID)
-        nextID+=1
-        print(record.chr+"\t"+str(record.interval.begin)+"\t"+str(record.interval.end)+"\t"+id+"\t"+str(llr),sep="\t",flush=True)
+        #continue
+    #if(llr<MIN_LLR):
+        #llr=-5000
+        #continue
+    id="elem"+str(nextID)
+    nextID+=1
+    print(record.chr+"\t"+str(record.interval.begin)+"\t"+str(record.interval.end)+"\t"+id+"\t"+str(llr),sep="\t",flush=True)
 reader.close()
 os.remove(tempFile)
 
