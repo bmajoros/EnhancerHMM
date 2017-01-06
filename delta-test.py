@@ -16,10 +16,14 @@ from Pipe import Pipe
 
 BASE="/home/bmajoros/GGR/delta"
 HMM_DIR=BASE+"/hmm"
-POS_HMM=HMM_DIR+"/trained-pos5.hmm"
-NEG_HMM=HMM_DIR+"/trained-neg1.hmm"
-TEST_POS=BASE+"/test-pos"
-TEST_NEG=BASE+"/test-neg"
+#POS_HMM=HMM_DIR+"/trained-pos5.hmm"
+#NEG_HMM=HMM_DIR+"/trained-neg1.hmm"
+POS_HMM=HMM_DIR+"/subset-pos.hmm"
+NEG_HMM=HMM_DIR+"/subset-neg.hmm"
+#TEST_POS=BASE+"/test-pos"
+#TEST_NEG=BASE+"/test-neg"
+TEST_POS=BASE+"/subset-pos"
+TEST_NEG=BASE+"/subset-neg"
 MUMMIE=os.environ["MUMMIE"]
 EVAL=MUMMIE+"/get-likelihood"
 

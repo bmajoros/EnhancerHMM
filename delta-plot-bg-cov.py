@@ -17,10 +17,16 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib import cm
 
-means=pd.read_csv("means.txt",sep="\t",header=None)
+colormap=cm.bwr
 
-plt.imshow(cov3, cmap=cm.Reds, interpolation='nearest', vmin=0, vmax=m)
+cov=pd.read_csv("bg-cov.txt",sep="\t",header=None)
+
+maxAll=max(cov.max())
+minAll=-maxAll
+
+plt.imshow(cov,cmap=colormap,interpolation='nearest',vmin=minAll,vmax=maxAll)
 plt.colorbar()  
-plt.savefig("cov3.pdf")
+plt.savefig("bg-cov.pdf")
+
 
 
