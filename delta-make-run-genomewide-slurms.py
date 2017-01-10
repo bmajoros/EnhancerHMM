@@ -15,19 +15,23 @@ from Rex import Rex
 rex=Rex()
 
 BASE="/home/bmajoros/GGR/delta"
-SLURM_DIR=BASE+"/slurms/genomewide-slurms"
-PROGRAM=BASE+"/src/delta-genomewide.py"
-PARTITIONS=BASE+"/peak-partitions"
+SLURM_DIR=BASE+"/slurms/run-genomewide-slurms"
+PROGRAM=BASE+"/src/run-genome-wide.py"
+FASTB=BASE+"/delta-fastb"
+POS_HMM=BASE+"/hmm/trained-nomotif.hmm"
+NEG_HMM=BASE+"/hmm/trained-neg-nomotif.hmm"
+PARTITIONS=BASE+"/fastb-partitions"
 
 writer=SlurmWriter()
 lists=os.listdir(PARTITIONS)
 for list in lists:
   list=list.rstrip()
   if(not rex.find("(\d+)\.txt$",list)): continue
-  #ID=rex[1]
+  ID=rex[1]
   infile=PARTITIONS+"/"+list
-  #outfile=BASE+"/genomewide/"+ID+".txt"
-  writer.addCommand(PROGRAM+" "+infile)
+  outfile=BASE+"/genomewide/"+ID+".txt"
+  writer.addCommand(PROGRAM+" "+infile+" "+FASTB+" "
+                    +POS_HMM+" "+NEG_HMM+" "+ID+" > "+outfile)
 writer.mem(5000)
 writer.nice(500)
 writer.setQueue("new,all")

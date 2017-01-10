@@ -62,7 +62,7 @@ def combine(in1,in2,timepoint,outfile):
     for i in range(n):
         track=fastb2.getIthTrack(i)
         name=track.getID()
-        track.rename(name+"."+timepoint)
+        track.rename(name+".t3") # name used by the HMM
         fastb1.addTrack(track);
     fastb1.save(outfile)
 

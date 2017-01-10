@@ -45,9 +45,10 @@ while(True):
     fields=line.split()
     if(len(fields)!=6): continue
     (name,begin,end,elemID,LLR,parse)=fields
-    if(not rex.find("^(\S+).standardized",name)):
-        exit("can't parse name: "+name)
-    id=rex[1]
+    id=None
+    if(rex.find("^(\S+).standardized",name)): id=rex[1]
+    elif(rex.find("^(\S+)\.t\d+\.fastb",name)): id=rex[1]
+    else: exit("can't parse name: "+name)
     if(p300hash.get(id,None) is None): continue #exit("can't find "+id)
     rec=p300hash[id]
     print(rec.chr,rec.interval.begin,rec.interval.end,name,LLR,sep="\t")

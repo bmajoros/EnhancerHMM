@@ -17,8 +17,8 @@ from BedReader import BedReader
 from Rex import Rex
 rex=Rex()
 
-TIMEPOINTS=("t00","t05","t1","t2","t3","t4","t5","t6","t7","t8","t10","t12")
-BASE="/home/bmajoros/GGR/p300"
+TIMEPOINTS=("t05","t1","t2","t3","t4","t5","t6","t7","t8","t10","t12")
+BASE="/home/bmajoros/GGR/delta"
 infile=BASE+"/genomewide-hg19.bed"
 
 bySubstrate={}
@@ -32,6 +32,8 @@ while(True):
         elem=rex[1];
         timepoint=rex[2]
     elif(rex.find("^(\S+)\.(t\d+)\.fastb",record.name)):
+        elem=rex[1];
+        timepoint=rex[2]
     else: exit("cannot parse "+record.name)
     if(bySubstrate.get(elem,None) is None): bySubstrate[elem]=[]
     bySubstrate[elem].append([timepoint,record.score])
