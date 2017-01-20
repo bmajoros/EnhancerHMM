@@ -53,6 +53,8 @@ for substrate in substrates:
         hash[timepoint]=score
     print(substrate+"\t",end="")
     for timepoint in TIMEPOINTS:
+        if(hash.get(timepoint,None) is None):
+            exit(substrate+" has no "+timepoint)
         score=hash[timepoint]
         score=float(score)
         score=int(score)

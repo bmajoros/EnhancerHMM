@@ -10,24 +10,24 @@ from builtins import (bytes, dict, int, list, object, range, str, ascii,
    chr, hex, input, next, oct, open, pow, round, super, filter, map, zip)
 # The above imports should allow this program to run in both Python 2 and
 # Python 3.  You might need to update your version of module "future".
-import sys
-import ProgramName
-import numpy as np
-import pandas as pd
-import matplotlib.pyplot as plt
-from matplotlib import cm
+import os
+from Rex import Rex
+rex=Rex()
 
-if(len(sys.argv)!=4):
-    exit(ProgramName.get()+" <in.cov> <max> <out.pdf>\n")
-(infile,maxValue,outfile)=sys.argv[1:]
-maxValue=float(maxValue)
-minValue=-maxValue
+def process(dir,motif):
+    files=os.listdir(dir)
+    for file in files:
+        if(rex.find("(\S+)\.standardized",file)):
+            peak=rex[1]
+            print(peak,motif,sep="\t")
 
-colormap=cm.bwr
-cov=pd.read_csv(infile,sep="\t",header=None)
-plt.imshow(cov,cmap=colormap,interpolation='nearest',vmin=minValue,
-           vmax=maxValue)
-plt.colorbar()  
-plt.savefig(outfile)
+BASE="/home/bmajoros/GGR/delta"
+process("CTCF-fastb","CTCF")
+process("FOX-fastb","FOX")
+process("CEBP-fastb","CEBP")
+process("AP1-fastb","AP1")
+process("KLF-fastb","KLF")
+process("GR-fastb","GR")
+
 
 

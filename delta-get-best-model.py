@@ -10,24 +10,26 @@ from builtins import (bytes, dict, int, list, object, range, str, ascii,
    chr, hex, input, next, oct, open, pow, round, super, filter, map, zip)
 # The above imports should allow this program to run in both Python 2 and
 # Python 3.  You might need to update your version of module "future".
-import sys
-import ProgramName
-import numpy as np
-import pandas as pd
-import matplotlib.pyplot as plt
-from matplotlib import cm
+import os
+from Rex import Rex
+rex=Rex()
 
-if(len(sys.argv)!=4):
-    exit(ProgramName.get()+" <in.cov> <max> <out.pdf>\n")
-(infile,maxValue,outfile)=sys.argv[1:]
-maxValue=float(maxValue)
-minValue=-maxValue
-
-colormap=cm.bwr
-cov=pd.read_csv(infile,sep="\t",header=None)
-plt.imshow(cov,cmap=colormap,interpolation='nearest',vmin=minValue,
-           vmax=maxValue)
-plt.colorbar()  
-plt.savefig(outfile)
+BASE="/home/bmajoros/GGR/delta/slurms/train-slurms/outputs"
+files=os.listdir(BASE)
+bestModel=None
+bestLL=None
+for file in files:
+    LL=None
+    with open(BASE+"/"+file,"rt") as IN:
+        for line in IN:
+            if(rex.find("ITERATION.*LL=(\S+)\s+deltaLL",line)):
+                LL=float(rex[1])
+    if(bestLL is None or LL is not None and LL>bestLL):
+        bestLL=LL
+        if(not rex.find("(\d+).output",file)):
+            exit("can't parse filename: "+file)
+        index=int(rex[1])
+        bestModel="neg-2paths"+str(index-1)+".hmm"
+print(bestModel,bestLL)
 
 

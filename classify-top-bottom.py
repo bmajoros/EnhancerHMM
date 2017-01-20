@@ -12,22 +12,35 @@ from builtins import (bytes, dict, int, list, object, range, str, ascii,
 # Python 3.  You might need to update your version of module "future".
 import sys
 import ProgramName
-import numpy as np
-import pandas as pd
-import matplotlib.pyplot as plt
-from matplotlib import cm
+from Rex import Rex
+rex=Rex()
 
-if(len(sys.argv)!=4):
-    exit(ProgramName.get()+" <in.cov> <max> <out.pdf>\n")
-(infile,maxValue,outfile)=sys.argv[1:]
-maxValue=float(maxValue)
-minValue=-maxValue
+if(len(sys.argv)!=3):
+    exit(ProgramName.get()+" <genomewide.txt> <threshold>\n")
+(infile,THRESHOLD)=sys.argv[1:]
+THRESHOLD=float(THRESHOLD)
 
-colormap=cm.bwr
-cov=pd.read_csv(infile,sep="\t",header=None)
-plt.imshow(cov,cmap=colormap,interpolation='nearest',vmin=minValue,
-           vmax=maxValue)
-plt.colorbar()  
-plt.savefig(outfile)
+topCount={}
+bottomCount={}
+peaks=set()
+IN=open(infile,"rt")
+for line in IN:
+    fields=line.rstrip().split()
+    if(len(fields)!=7): continue
+    (fastb,begin,end,id,LLR,parse,topBottom)=fields
+    LLR=float(LLR)
+    if(LLR<THRESHOLD): continue
+    if(not rex.find("(\S+)\.t\d+\.fastb",fastb)): exit("can't parse "+fastb)
+    peak=rex[1]
+    hash=topCount if topBottom=="top" else bottomCount
+    hash[peak]=hash.get(peak,0)+1
+    peaks.add(peak)
+IN.close()
+for peak in peaks:
+    numTop=topCount.get(peak,0)
+    numBottom=bottomCount.get(peak,0)
+    category="twopeak" if numTop>0 else "onepeak"
+    print(peak,category,sep="\t")
+
 
 

@@ -47,6 +47,7 @@ sizes=pd.read_csv(sizeFile,sep="\t",header=None)
 #plt.savefig("test.pdf")
 #exit()
 
+# cm.bwr?
 plt.imshow(df, cmap=cm.Reds, interpolation='nearest')
 plt.colorbar()  
 plt.savefig("heatmap.pdf")

@@ -56,21 +56,6 @@ def getPath(hmm,fastb):
         array.append(state)    
     return array
 
-def findElements(path):
-    elements=[]
-    begin=-1
-    L=len(path)
-    for i in range(L):
-        if(i==0 and path[i]!=1 or i>0 and path[i]!=1 and path[i-1]==1):
-            begin=i
-        elif(i>0 and path[i-1]!=1 and path[1]==1):
-            elements.append(Interval(begin,i))
-            elements[len(elements)-1].states=path[begin:i]
-    if(L>0 and path[L-1]!=1):
-        elements.append(Interval(begin,L))
-        elements[len(elements)-1].states=path[begin:L]
-    return elements
-
 def getSections(path):
     sections=[]
     L=len(path)
@@ -85,29 +70,6 @@ def getSections(path):
     if(len(elem)>0): sections.append(elem)
     return sections
 
-def satisfiesConstraints(path,minHump,minPeak,minTotal):
-    sections=getSections(path)
-    totalLen=0
-    for section in sections:
-        L=len(section)
-        type=section[0]
-        if(type==2 and L<minHump): return False
-        if(type==3 and L<minPeak): return False
-        if(type==4 and L<minHump): return False
-        if(type>1 and type<5): totalLen+=L
-    if(totalLen<minTotal): return False
-    return True
-
-def getForegroundLen(path):
-    sections=getSections(path)
-    totalLen=0
-    for section in sections:
-        L=len(section)
-        type=section[0]
-        #print("\t"+str(type)+"\t"+str(L))
-        if(type>1 and type<5): totalLen+=L
-    return totalLen
-
 def getForeground(path):
     sections=getSections(path)
     begin=None
@@ -116,16 +78,12 @@ def getForeground(path):
     for section in sections:
         L=len(section)
         type=section[0]
-        if(type>1 and type<5):
+        if(type>1 and type<5 or type>6 and type<10):
             if(begin is None): begin=pos
-        elif(type==5): end=pos
+        elif(type==5 or type==10): end=pos
         pos+=L
     if(end is None): end=pos
     return (begin,end)
-
-def applyConstraints(hmm,fastb,minHump,minPeak,minLen):
-    path=getPath(hmm,fastb)
-    return satisfiesConstraints(path,minHump,minPeak,minLen)
 
 def process(dir,posHMM,negHMM,label):
   files=os.listdir()
@@ -150,7 +108,7 @@ def getParse(path):
     for section in sections:
         L=len(section)
         type=section[0]
-        if(type>1 and type<5):
+        if(type>1 and type<5 or type>6 and type<10):
             if(len(parse)>0): parse+=":"
             begin=pos
             end=pos+L
@@ -162,7 +120,8 @@ def getParse(path):
 # main()
 #=========================================================================
 if(len(sys.argv)!=6):
-    exit(ProgramName.get()+" <list.txt> <fastb-dir> <pos.hmm> <neg.hmm> <taskID>\n")
+    exit(ProgramName.get()+
+         " <list.txt> <fastb-dir> <pos.hmm> <neg.hmm> <taskID>\n")
 (fileList,inDir,fgHMM,bgHMM,taskID)=sys.argv[1:]
 files=[]
 with open(fileList,"rt") as IN:
@@ -172,13 +131,16 @@ nextID=1
 for file in files:
     fullPath=inDir+"/"+file
     path=getPath(fgHMM,fullPath)
+    whichPath="top" if path[0]==1 else "bottom"
     (begin,end)=getForeground(path)
+    if(begin is None or end is None):
+        exit("bad path: "+str(path)+"\n"+fullPath+"\n")
     parse=getParse(path)
     L=end-begin
     llr=getLLR(fullPath)
     id="task"+taskID+"_elem"+str(nextID)
-    print(file+"\t"+str(begin)+"\t"+str(end)+"\t"+id+"\t"+str(llr)+"\t"+parse,
-          flush=True)
+    print(file+"\t"+str(begin)+"\t"+str(end)+"\t"+id+"\t"+str(llr)+"\t"+parse
+          +"\t"+whichPath,flush=True)
     nextID+=1
 
 #########################################################################

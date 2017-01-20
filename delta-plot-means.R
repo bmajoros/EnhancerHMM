@@ -1,8 +1,18 @@
 #!/data/reddylab/software/miniconda2/bin/Rscript
 options(width=500)
 
-maxY <- 1.5
-minY <- -1.2
+args <-commandArgs(TRUE)
+if(length(args)!=2) {
+    cat("usage: in.means out.pdf\n")
+    q(status=1)
+}
+infile <- args[1]
+outfile <- args[2]
+
+#maxY <- 2.6
+#minY <- -0.25
+maxY <- 2.0
+minY <- -1.5
 pointtype <- 16
 linewidth <- 2
 
@@ -14,15 +24,14 @@ linewidth <- 2
 #dfmax <- max(df)
 #dfmin <- min(df)
 
-#df <- read.table("means.txt")
-df <- read.table("means-bottom-t3t.txt")
+df <- read.table(infile)
 df <- as.data.frame(t(df))
 dfmax <- maxY
 dfmin <- minY
 #cat(paste(dfmin,"\t",dfmax))
 df <- cbind(df,c(1,2,3,4,5))
 
-pdf("means.pdf")
+pdf(outfile)
 par(mfrow=c(2,1))
 
 # DNase
