@@ -23,37 +23,33 @@ def fisher(a,b,c,d):
 def getTable(motif1,motif2,peaks):
     yesyes=0; yesno=0; noyes=0; nono=0
     for peak in peaks:
-        counts=getSingletonCounts(peak)
-        bothPresent=False
-        if(motif1==motif2):
-            bothPresent=counts.get(motif1,0)==2
-        else: 
-            bothPresent=counts.get(motif1,0)>0 and\
-                counts.get(motif2,0)>0
-        if(bothPresent): 
+        if(pairPresent(motif1,motif2,peak)):
             yesyes+=1
             continue
-        motif1present=counts.get(motif1,0)>0
-        motif2present=counts.get(motif2,0)>0
+        present=getPresent(peak)
+        motif1present=motif1 in present
+        motif2present=motif2 in present
         if(motif1==motif2):
             if(motif1present):
                 yesno+=1; noyes+=1
             else: nono+=1
         else:
             if(motif1present): yesno+=1
-            elif(motif2present): noyes+=1
-            else: nono+=1
+            if(motif2present): noyes+=1
+            if(not (motif1present or motif2present)): nono+=1
     return (yesyes,yesno,noyes,nono)
 
-def incrementHash(key,hash):
-    hash[key]=hash.get(key,0)+1
-
-def getSingletonCounts(peak):
-    counts={}
+def pairPresent(motif1,motif2,peak):
     for pair in peak:
-        incrementHash(pair[0],counts)
-        incrementHash(pair[1],counts)
-    return counts
+        if(pair[0]==motif1 and pair[1]==motif2): return True
+    return False
+
+def getPresent(peak):
+    present=set()
+    for pair in peak:
+        present.add(pair[0])
+        present.add(pair[1])
+    return present
 
 #=========================================================================
 # main()
@@ -77,6 +73,7 @@ for line in IN:
     else: 
         pairs.append([first,second])
         motifs.add(first); motifs.add(second)
+peaks.append(pairs)
 IN.close()
 
 for motif1 in motifs:
