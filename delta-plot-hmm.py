@@ -31,7 +31,6 @@ def whichComponent(weights):
     return None
 
 def parseState(state,IN):
-    print("parsing state",state)
     numComponents=int(IN.readline())
     weights=IN.readline().rstrip().split()
     components=[]
@@ -103,4 +102,8 @@ if(numStates==10):
     emit0and3hr(parms[5:10],"path2")
     emitDiff(parms[0:5],"path1")
     emitDiff(parms[5:10],"path2")
+if(numStates==15):
+    emit0and3hr(parms[0:5],"path1")
+    emit0and3hr(parms[5:10],"path2")
+    emit0and3hr(parms[10:15],"path3")
 

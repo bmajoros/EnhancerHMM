@@ -20,16 +20,19 @@ bestModel=None
 bestLL=None
 for file in files:
     LL=None
+    done=False
     with open(BASE+"/"+file,"rt") as IN:
         for line in IN:
             if(rex.find("ITERATION.*LL=(\S+)\s+deltaLL",line)):
                 LL=float(rex[1])
+            elif(rex.find("^done",line)): done=True
+    #if(not done): continue
     if(bestLL is None or LL is not None and LL>bestLL):
         bestLL=LL
         if(not rex.find("(\d+).output",file)):
             exit("can't parse filename: "+file)
         index=int(rex[1])
-        bestModel="neg-2paths"+str(index-1)+".hmm"
+        bestModel="threepaths-trained"+str(index-1)+".hmm"
 print(bestModel,bestLL)
 
 
