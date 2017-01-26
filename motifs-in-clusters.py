@@ -11,7 +11,6 @@ from builtins import (bytes, dict, int, list, object, range, str, ascii,
 # The above imports should allow this program to run in both Python 2 and
 # Python 3.  You might need to update your version of module "future".
 import sys
-import commands
 import ProgramName
 from Pipe import Pipe
 from Rex import Rex
@@ -23,7 +22,8 @@ def fisher(a,b,c,d):
     #pipe=Pipe("/home/bmajoros/src/scripts/fisher-exact-test.R "+str(a)+" "+
     #          str(b)+" "+str(c)+" "+str(d))
     #line=pipe.readline()
-    (ret,line)=commands.getstatusoutput(cmd)
+    #(ret,line)=commands.getstatusoutput(cmd)
+    line=Pipe.run(cmd)
     return float(line.rstrip())
 
 if(len(sys.argv)!=4):

@@ -14,16 +14,18 @@ import re
 from Rex import Rex
 rex=Rex()
 
+#CLASSES="0,2,3,2,3,2,1,2,3,2,1"
+CLASSES="0,1,2,3,2,1,1,2,3,2,1,2,3,2,3,2"
+MUMMIE=os.environ["MUMMIE"]
 BASE="/home/bmajoros/GGR/delta"
-SLURM_DIR=BASE+"/slurms/run-genomewide-slurms"
-PROGRAM=BASE+"/src/run-genome-wide.py"
+SLURM_DIR=BASE+"/slurms/annotate-threepath-slurms"
+PROGRAM=BASE+"/src/annotate-partition.pl"
 FASTB=BASE+"/delta-fastb"
-#POS_HMM=BASE+"/hmm/trained-nomotif.hmm"
 #POS_HMM=BASE+"/hmm/twopaths-bestLL.hmm"
-#POS_HMM=BASE+"/hmm/threepaths-best.hmm"
-POS_HMM=BASE+"/hmm/onepath.hmm"
-NEG_HMM=BASE+"/hmm/trained-neg-nomotif.hmm"
+POS_HMM=BASE+"/hmm/threepaths-best.hmm"
 PARTITIONS=BASE+"/fastb-partitions"
+#OUTDIR=BASE+"/annotated-twopath"
+OUTDIR=BASE+"/annotated-threepath"
 
 writer=SlurmWriter()
 lists=os.listdir(PARTITIONS)
@@ -32,13 +34,12 @@ for list in lists:
   if(not rex.find("(\d+)\.txt$",list)): continue
   ID=rex[1]
   infile=PARTITIONS+"/"+list
-  outfile=BASE+"/genomewide/"+ID+".txt"
-  writer.addCommand(PROGRAM+" "+infile+" "+FASTB+" "
-                    +POS_HMM+" "+NEG_HMM+" "+ID+" > "+outfile)
+  writer.addCommand(PROGRAM+" "+FASTB+" "+POS_HMM+" "+CLASSES
+                    +" "+infile+" "+OUTDIR)
 writer.mem(5000)
 writer.nice(500)
 writer.setQueue("new,all")
-writer.writeArrayScript(SLURM_DIR,"GENOME",SLURM_DIR,500)
+writer.writeArrayScript(SLURM_DIR,"ANNOTATE",SLURM_DIR,500)
 
 
 

@@ -11,14 +11,14 @@ from builtins import (bytes, dict, int, list, object, range, str, ascii,
 # The above imports should allow this program to run in both Python 2 and
 # Python 3.  You might need to update your version of module "future".
 import sys
-import commands
+from Pipe import Pipe
 import ProgramName
 
 def fisher(a,b,c,d):
     cmd="/home/bmajoros/src/scripts/fisher-exact-test.R "+str(a)+" "+\
         str(b)+" "+str(c)+" "+str(d)
-    #print(cmd)
-    (ret,line)=commands.getstatusoutput(cmd)
+    #(ret,line)=commands.getstatusoutput(cmd)
+    line=Pipe.run(cmd)
     return float(line.rstrip())
 
 #=========================================================================

@@ -19,7 +19,7 @@ rex=Rex()
 
 TIMEPOINTS=("t05","t1","t2","t3","t4","t5","t6","t7","t8","t10","t12")
 BASE="/home/bmajoros/GGR/delta"
-infile=BASE+"/genomewide-hg19.bed"
+infile=BASE+"/genomewide-onepath.bed"
 
 bySubstrate={}
 reader=BedReader(infile)

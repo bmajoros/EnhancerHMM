@@ -78,9 +78,9 @@ def getForeground(path):
     for section in sections:
         L=len(section)
         type=section[0]
-        if(type>1 and type<5 or type>6 and type<10):
+        if(type>1 and type<5 or type>6 and type<10 or type>11 and type<15):
             if(begin is None): begin=pos
-        elif(type==5 or type==10): end=pos
+        elif(type==5 or type==10 or type==15): end=pos
         pos+=L
     if(end is None): end=pos
     return (begin,end)
@@ -108,7 +108,7 @@ def getParse(path):
     for section in sections:
         L=len(section)
         type=section[0]
-        if(type>1 and type<5 or type>6 and type<10):
+        if(type>1 and type<5 or type>6 and type<10 or type>11 and type<15):
             if(len(parse)>0): parse+=":"
             begin=pos
             end=pos+L
@@ -131,7 +131,11 @@ nextID=1
 for file in files:
     fullPath=inDir+"/"+file
     path=getPath(fgHMM,fullPath)
-    whichPath="top" if path[0]==1 else "bottom"
+    whichPath=None;
+    if(path[0]==1): whichPath="top"
+    elif(path[0]==6): whichPath="middle"
+    elif(path[0]==11): whichPath="bottom"
+    else: exit("can't identify path")
     (begin,end)=getForeground(path)
     if(begin is None or end is None):
         exit("bad path: "+str(path)+"\n"+fullPath+"\n")

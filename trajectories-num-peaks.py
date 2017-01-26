@@ -15,6 +15,7 @@ import ProgramName
 from Rex import Rex
 rex=Rex()
 
+MIN_PEAK_LEN=100
 TIMEPOINTS=("t05","t1","t2","t3","t4","t5","t6","t7","t8","t10","t12")
 
 def getTimeIndex(time):
@@ -36,7 +37,18 @@ for line in IN:
     LLR=float(LLR)
     numPeaks=0
     if(LLR>=THRESHOLD):
-        numPeaks=1 if topBottom=="bottom" else 2
+        if(topBottom=="top"): numPeaks=1
+        if(topBottom=="middle"): numPeaks=1
+        if(topBottom=="bottom"): numPeaks=2
+    if(not rex.find("(\d+)-(\d+):(\d+)-(\d+):(\d+)-(\d+)",parse)):
+        exit("can't parse path "+parse)
+    b1=int(rex[1]); e1=int(rex[2])
+    b2=int(rex[3]); e2=int(rex[4])
+    b3=int(rex[5]); e3=int(rex[6])
+    if(numPeaks==2):
+        peakLen1=e1-b1; peakLen2=e3-b3
+        if(peakLen1<MIN_PEAK_LEN): numPeaks-=1
+        if(peakLen2<MIN_PEAK_LEN): numPeaks-=1
     if(not rex.find("(\S+)\.(t\d+)\.fastb",fastb)): exit("can't parse "+fastb)
     peak=rex[1]; time=rex[2]
     timeIndex=getTimeIndex(time)

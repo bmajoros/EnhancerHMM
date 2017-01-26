@@ -26,7 +26,7 @@ trajectories={}
 IN=open(trajectoryFile,"rt")
 for line in IN:
     fields=line.rstrip().split()
-    if(len(fields)!=13): continue
+    if(len(fields)!=12): continue
     peak=fields[0]
     trajectories[peak]=fields[1:]
 IN.close()

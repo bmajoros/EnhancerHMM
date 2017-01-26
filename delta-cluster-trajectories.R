@@ -1,7 +1,8 @@
 #!/data/reddylab/software/miniconda2/bin/Rscript
 options(width=500)
 #data <- read.table("trajectories.txt")
-data <- read.table("trajectories-2path.txt")
+#data <- read.table("trajectories-2path.txt")
+data <- read.table("trajectories-onepath.txt")
 elements <- data[1]
 data <- data[2:12]
 trinary <- ifelse(data>1000,1,ifelse(data< -1000,-1,0))

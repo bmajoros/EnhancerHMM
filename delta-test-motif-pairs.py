@@ -12,12 +12,14 @@ from builtins import (bytes, dict, int, list, object, range, str, ascii,
 # Python 3.  You might need to update your version of module "future".
 import sys
 import ProgramName
-import commands
+#import commands
+from Pipe import Pipe
 
 def fisher(a,b,c,d):
     cmd="/home/bmajoros/src/scripts/fisher-exact-test.R "+str(a)+" "+\
         str(b)+" "+str(c)+" "+str(d)
-    (ret,line)=commands.getstatusoutput(cmd)
+    #(ret,line)=commands.getstatusoutput(cmd)
+    line=Pipe.run(cmd)
     return float(line.rstrip())
 
 def getTable(motif1,motif2,peaks):

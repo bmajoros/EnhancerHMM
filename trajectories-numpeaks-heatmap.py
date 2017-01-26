@@ -25,7 +25,7 @@ df=pd.read_csv(clusterFile,sep="\t",header=None)
 #sizes=pd.read_csv(sizeFile,sep="\t",header=None)
 
 # cm.bwr?
-plt.imshow(df, cmap=cm.Blues, interpolation='nearest')
+plt.imshow(df, cmap=cm.Reds, interpolation='nearest')
 plt.colorbar()  
 plt.savefig(outfile)
 
