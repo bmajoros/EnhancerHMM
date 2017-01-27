@@ -20,9 +20,10 @@ rex=Rex()
 #=========================================================================
 # main()
 #=========================================================================
-if(len(sys.argv)!=6):
-    exit(ProgramName.get()+" <trajectories.txt> <peaks-motifs.txt> <raw-P300.txt> <cluster-membership.txt> <which-cluster>\n")
-(trajectoryFile,motifFile,p300file,clusterFile,whichCluster)=sys.argv[1:]
+if(len(sys.argv)!=8):
+    exit(ProgramName.get()+" <trajectories.txt> <peaks-motifs.txt> <raw-P300.txt> <cluster-membership.txt> <which-cluster> <outfile1> <outfile2>\n")
+(trajectoryFile,motifFile,p300file,clusterFile,whichCluster,outfile1,outfile2)\
+    =sys.argv[1:]
 whichCluster=int(whichCluster)
 
 cluster1=set()
@@ -54,6 +55,8 @@ with open(trajectoryFile,"rt") as IN:
         peakID=fields[0]
         numPeaks[peakID]=int(maxPeaks)
 
+OUT1=open(outfile1,"wt")
+OUT2=open(outfile2,"wt")
 valuesByPeaks=[]
 for i in range(3): valuesByPeaks.append([])
 with open(p300file,"rt") as IN:
@@ -72,9 +75,10 @@ with open(p300file,"rt") as IN:
         if(np==0): continue
         #valuesByPeaks[np].append(maxValue)
         valuesByPeaks[np].append(sumValue)
-
+        OUT=OUT1 if np==1 else OUT2
+        print(sumValue,file=OUT)
 (U,P)=mannwhitneyu(valuesByPeaks[1],valuesByPeaks[2])
 print(2**numpy.median(valuesByPeaks[1]),2**numpy.median(valuesByPeaks[2]),U,P)
-
+OUT1.close(); OUT2.close()
 
 
