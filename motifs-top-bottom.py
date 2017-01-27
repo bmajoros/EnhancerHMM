@@ -72,7 +72,7 @@ for motif in motifList:
     exp_motifTwoPeak=round(P_motif*P_twoPeak*float(total),0)
     exp_nomotifOnePeak=round(P_nomotif*P_onePeak*float(total),0)
     exp_nomotifTwoPeak=round(P_nomotif*P_twoPeak*float(total),0)
-    if(P>=0.05): continue
+    #if(P>=0.05): continue
     print(motif,P,sep="\t")
     print("\tmotif\t\tnomotif")
     print("1peak\t"+str(motifOnePeak)+" ("+str(exp_motifOnePeak)+")\t"+

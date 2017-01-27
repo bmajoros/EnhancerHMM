@@ -18,8 +18,8 @@ from Bed3Record import Bed3Record
 from Rex import Rex
 rex=Rex()
 
-FROM_PEAKS=1
-TO_PEAKS=2
+FROM_PEAKS=2
+TO_PEAKS=1
 
 def labelElements(elements):
     for elem in elements:

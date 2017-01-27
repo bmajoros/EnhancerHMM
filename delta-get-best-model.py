@@ -14,7 +14,8 @@ import os
 from Rex import Rex
 rex=Rex()
 
-BASE="/home/bmajoros/GGR/delta/slurms/train-slurms/outputs"
+#BASE="/home/bmajoros/GGR/delta/slurms/train-slurms/outputs"
+BASE="/home/bmajoros/GGR/delta/slurms/train-full-slurms/outputs"
 files=os.listdir(BASE)
 bestModel=None
 bestLL=None
@@ -32,7 +33,8 @@ for file in files:
         if(not rex.find("(\d+).output",file)):
             exit("can't parse filename: "+file)
         index=int(rex[1])
-        bestModel="threepaths-trained"+str(index-1)+".hmm"
+        #bestModel=str(index-1)+".hmm"
+        bestModel=str(index)+".hmm"
 print(bestModel,bestLL)
 
 

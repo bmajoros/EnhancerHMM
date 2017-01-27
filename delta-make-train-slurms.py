@@ -15,20 +15,19 @@ from Rex import Rex
 rex=Rex()
 
 DASH_R="" #"-R"
-NUM_JOBS=200
+NUM_JOBS=100
 BASE="/home/bmajoros/GGR/delta"
-SLURM_DIR=BASE+"/slurms/train-slurms"
+#SLURM_DIR=BASE+"/slurms/train-slurms"
+SLURM_DIR=BASE+"/slurms/train-full-slurms"
 PROGRAM="/home/bmajoros/src/MUMMIE/baum-welch"
-trainDir="../train-pos-nomotif"
-#trainDir="../train-neg-nomotif"
+#trainDir="../train-pos-nomotif"
+trainDir="../train-pos-full"
 
 writer=SlurmWriter()
 for i in range(NUM_JOBS):
-  #outfile="twopaths-trained"+str(i)+".hmm"
-  #outfile="neg-2paths"+str(i)+".hmm"
-  outfile="threepaths-trained"+str(i)+".hmm"
-  #infile="twopaths.hmm"
-  infile="threepaths.hmm"
+  #outfile="1path-half"+str(i+1)+".hmm"
+  outfile="1path-full"+str(i+1)+".hmm"
+  infile="onepath-3components.hmm"
   writer.addCommand("cd /home/bmajoros/GGR/delta/hmm ; "+
                     PROGRAM+" "+DASH_R+" -W -t tie.txt -c 32 -L 0.01 -N 1000 "
                     +infile+" tgf.tgf "+trainDir+" 1000 "+outfile)
@@ -36,7 +35,7 @@ writer.mem(5000)
 writer.nice(500)
 writer.threads(32)
 writer.setQueue("new,all")
-writer.writeArrayScript(SLURM_DIR,"EM",SLURM_DIR,500)
+writer.writeArrayScript(SLURM_DIR,"FULL",SLURM_DIR,500)
 
 
 

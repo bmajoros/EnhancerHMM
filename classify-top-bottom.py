@@ -32,14 +32,15 @@ for line in IN:
     if(LLR<THRESHOLD): continue
     if(not rex.find("(\S+)\.t\d+\.fastb",fastb)): exit("can't parse "+fastb)
     peak=rex[1]
-    hash=topCount if topBottom=="top" else bottomCount
+    hash=topCount if (topBottom=="top" or topBottom=="middle") else bottomCount
     hash[peak]=hash.get(peak,0)+1
     peaks.add(peak)
 IN.close()
 for peak in peaks:
     numTop=topCount.get(peak,0)
     numBottom=bottomCount.get(peak,0)
-    category="twopeak" if numTop>0 else "onepeak"
+    #category="twopeak" if numTop>0 else "onepeak"
+    category="twopeak" if numBottom>0 else "onepeak"
     print(peak,category,sep="\t")
 
 

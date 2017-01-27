@@ -15,7 +15,8 @@ import ProgramName
 from Rex import Rex
 rex=Rex()
 
-MIN_PEAK_LEN=100
+#MIN_PEAK_LEN=100
+MIN_PEAK_LEN=0
 TIMEPOINTS=("t05","t1","t2","t3","t4","t5","t6","t7","t8","t10","t12")
 
 def getTimeIndex(time):

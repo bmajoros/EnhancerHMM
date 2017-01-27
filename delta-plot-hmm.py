@@ -60,6 +60,7 @@ def emitDiffFeatures(features,parms,label):
 
 def emitFeatures(features,parms,label,hour):
     outfile=label+".means"
+    print("outfile",outfile)
     OUT=open(outfile,"wt")
     for f in features:
         for i in range(len(parms)):
@@ -97,6 +98,9 @@ IN.close()
 
 # Generate output
 numStates=len(parms)
+if(numStates==5):
+    emit0and3hr(parms[0:5],"path1")
+    emitDiff(parms[0:5],"path1")
 if(numStates==10):
     emit0and3hr(parms[0:5],"path1")
     emit0and3hr(parms[5:10],"path2")

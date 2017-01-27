@@ -9,10 +9,10 @@ if(length(args)!=2) {
 infile <- args[1]
 outfile <- args[2]
 
-#maxY <- 2.6
-#minY <- -0.25
+#maxY <- 1.0
+#minY <- -1.5
 maxY <- 2.0
-minY <- -1.5
+minY <- -0.5
 pointtype <- 16
 linewidth <- 2
 
