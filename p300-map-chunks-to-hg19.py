@@ -43,8 +43,8 @@ while(True):
     line=IN.readline()
     if(not line): break
     fields=line.split()
-    if(len(fields)!=7): continue
-    (name,begin,end,elemID,LLR,parse,topBottom)=fields
+    if(len(fields)!=8): continue
+    (name,begin,end,elemID,LLR,posterior,parse,topBottom)=fields
     id=None
     if(rex.find("^(\S+).standardized",name)): id=rex[1]
     elif(rex.find("^(\S+)\.t\d+\.fastb",name)): id=rex[1]

@@ -23,6 +23,9 @@ from Rex import Rex
 rex=Rex()
 MUMMIE=os.environ["MUMMIE"]
 
+fgPrior=math.log(0.5)
+bgPrior=math.log(0.5)
+
 def getLL(fastb,hmm):
     cmd=MUMMIE+"/get-likelihood "+hmm+" "+fastb
     pipe=Pipe(cmd)
@@ -142,9 +145,10 @@ for file in files:
     parse=getParse(path)
     L=end-begin
     llr=getLLR(fullPath)
+    P=getPosterior(fullPath)
     id="task"+taskID+"_elem"+str(nextID)
-    print(file+"\t"+str(begin)+"\t"+str(end)+"\t"+id+"\t"+str(llr)+"\t"+parse
-          +"\t"+whichPath,flush=True)
+    print(file+"\t"+str(begin)+"\t"+str(end)+"\t"+id+"\t"+str(llr)
+          +"\t"+str(P)+"\t"+parse+"\t"+whichPath,flush=True)
     nextID+=1
 
 #########################################################################

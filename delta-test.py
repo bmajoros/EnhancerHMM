@@ -26,10 +26,15 @@ POS_HMM=HMM_DIR+"/1path-best-half.hmm"
 #POS_HMM=HMM_DIR+"/onepath.hmm"
 #POS_HMM=HMM_DIR+"/retrain.hmm"
 NEG_HMM=HMM_DIR+"/trained-neg-nomotif.hmm"
+#POS_HMM=HMM_DIR+"/2path-62.hmm"
+#POS_HMM=HMM_DIR+"/twopaths-dna2x.hmm"
+#NEG_HMM=HMM_DIR+"/neg-dna2x.hmm"
 #TEST_POS=BASE+"/subset-pos"
 #TEST_NEG=BASE+"/subset-neg"
 TEST_POS=BASE+"/test-pos-nomotif"
 TEST_NEG=BASE+"/test-neg-nomotif"
+#TEST_POS=BASE+"/test-pos-dna"
+#TEST_NEG=BASE+"/test-neg-dna"
 MUMMIE=os.environ["MUMMIE"]
 EVAL=MUMMIE+"/get-likelihood"
 
@@ -37,6 +42,7 @@ def getLL(file,hmm):
     cmd=EVAL+" "+hmm+" "+file
     pipe=Pipe(cmd)
     line=pipe.readline()
+    #print(cmd)
     LL=float(line.rstrip())
     return LL
 

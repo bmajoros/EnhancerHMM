@@ -10,32 +10,34 @@ from builtins import (bytes, dict, int, list, object, range, str, ascii,
    chr, hex, input, next, oct, open, pow, round, super, filter, map, zip)
 # The above imports should allow this program to run in both Python 2 and
 # Python 3.  You might need to update your version of module "future".
+import sys
 import os
+import ProgramName
+from Fastb import Fastb
+from FastbTrack import FastbTrack
 from Rex import Rex
 rex=Rex()
 
-BASE="/home/bmajoros/GGR/delta/slurms/train-slurms/outputs"
-#BASE="/home/bmajoros/GGR/delta/slurms/train-full-slurms/outputs"
-files=os.listdir(BASE)
-models=[]
+def getDnaTrack(peakID,dir):
+    #fastb=Fastb(dir+"/"+peakID+".fastb")
+    fastb=Fastb(dir+"/"+peakID+".standardized_across_all_timepoints.t00.fastb")
+    return fastb.getTrackByName("dna")
+
+#=========================================================================
+# main()
+#=========================================================================
+if(len(sys.argv)!=4):
+    exit(ProgramName.get()+" <in-fastb> <dna-dir> <out-fastb>\n")
+(inDir,dnaDir,outDir)=sys.argv[1:]
+
+files=os.listdir(inDir)
 for file in files:
-    LL=None
-    done=False
-    with open(BASE+"/"+file,"rt") as IN:
-        for line in IN:
-            if(rex.find("ITERATION.*LL=(\S+)\s+deltaLL",line)):
-                LL=float(rex[1])
-            elif(rex.find("^done",line)): done=True
-    if(not done): continue
-    if(LL is not None):
-        if(not rex.find("(\d+).output",file)): exit("can't parse: "+file)
-        index=int(rex[1])
-        bestModel=str(index)+".hmm"
-        models.append([bestModel,LL])
-models.sort(key=lambda x: -x[1])
-for i in range(10):
-    pair=models[i]
-    (file,LL)=pair
-    print(file,LL,sep="\t")
+    if(not rex.find("(\S+)\.fastb",file)): exit("cant' parse filename: "+file)
+    peakID=rex[1]
+    dna=getDnaTrack(peakID,dnaDir)
+    fastb=Fastb(inDir+"/"+file)
+    fastb.addTrack(dna)
+    fastb.save(outDir+"/"+file)
+
 
 

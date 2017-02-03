@@ -21,7 +21,7 @@ FASTB=BASE+"/delta-fastb"
 #POS_HMM=BASE+"/hmm/trained-nomotif.hmm"
 #POS_HMM=BASE+"/hmm/twopaths-bestLL.hmm"
 #POS_HMM=BASE+"/hmm/threepaths-best.hmm"
-POS_HMM=BASE+"/hmm/onepath.hmm"
+POS_HMM=BASE+"/hmm/1path-best-full.hmm"
 NEG_HMM=BASE+"/hmm/trained-neg-nomotif.hmm"
 PARTITIONS=BASE+"/fastb-partitions"
 
@@ -38,7 +38,7 @@ for list in lists:
 writer.mem(5000)
 writer.nice(500)
 writer.setQueue("new,all")
-writer.writeArrayScript(SLURM_DIR,"GENOME",SLURM_DIR,500)
+writer.writeArrayScript(SLURM_DIR,"GENOMEWIDE",SLURM_DIR,500)
 
 
 

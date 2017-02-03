@@ -90,13 +90,20 @@ for line in IN:
             print(motif.motif,p300_1,"2",sep="\t")
         for motif in motifsPeak2:
             print(motif.motif,p300_2,"2",sep="\t")
+        if(len(motifsPeak1)==0):
+            print("NONE",p300_1,"2",sep="\t")
+        if(len(motifsPeak2)==0):
+            print("NONE",p300_2,"2",sep="\t")
     elif(numPeaks==1):
         peak=Interval(int(rex[3]),int(rex[4]))
         peakLen=peak.length()
         if(peakLen<MIN_PEAK_LEN): continue
+        p300=getP300(fastbFile,peak)
         motifsInPeak=getMotifsInPeak(motifs,peak)
         for motif in motifsInPeak:
-            print(motif.motif,p300_1,"1",sep="\t")
+            print(motif.motif,p300,"1",sep="\t")
+        if(len(motifsInPeak)==0):
+            print("NONE",p300,"1",sep="\t")
 IN.close()
 
 

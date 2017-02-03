@@ -15,27 +15,26 @@ from Rex import Rex
 rex=Rex()
 
 DASH_R="" #"-R"
-NUM_JOBS=100
+NUM_JOBS=300
 BASE="/home/bmajoros/GGR/delta"
-#SLURM_DIR=BASE+"/slurms/train-slurms"
-SLURM_DIR=BASE+"/slurms/train-full-slurms"
+SLURM_DIR=BASE+"/slurms/train-slurms"
+#SLURM_DIR=BASE+"/slurms/train-full-slurms"
 PROGRAM="/home/bmajoros/src/MUMMIE/baum-welch"
 #trainDir="../train-pos-nomotif"
 trainDir="../train-pos-full"
 
 writer=SlurmWriter()
 for i in range(NUM_JOBS):
-  #outfile="1path-half"+str(i+1)+".hmm"
-  outfile="1path-full"+str(i+1)+".hmm"
-  infile="onepath-3components.hmm"
+  infile="1path-best-half.hmm"
+  outfile="1path-"+str(i+1)+".hmm"
   writer.addCommand("cd /home/bmajoros/GGR/delta/hmm ; "+
-                    PROGRAM+" "+DASH_R+" -W -t tie.txt -c 32 -L 0.01 -N 1000 "
+                    PROGRAM+" "+DASH_R+" -W -t tie.txt -c 32 -L 0.01 -N 10000 "
                     +infile+" tgf.tgf "+trainDir+" 1000 "+outfile)
 writer.mem(5000)
 writer.nice(500)
 writer.threads(32)
 writer.setQueue("new,all")
-writer.writeArrayScript(SLURM_DIR,"FULL",SLURM_DIR,500)
+writer.writeArrayScript(SLURM_DIR,"ONEPATH",SLURM_DIR,500)
 
 
 
