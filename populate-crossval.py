@@ -12,6 +12,7 @@ from builtins import (bytes, dict, int, list, object, range, str, ascii,
 # Python 3.  You might need to update your version of module "future".
 import sys
 import os
+import random
 from SlurmWriter import SlurmWriter
 
 GENERATE_PARTITIONS=False
@@ -95,12 +96,18 @@ if(MAKE_SLURMS):
         bin=i+1
         traindir=TRAINING_SETS_NEG+"/leaveout"+str(bin)
         outfile=HMM_DIR+"/crossval-neg-bin"+str(bin)+".hmm"
-        cmd="cd "+HMM_DIR+" ; "+BAUMWELCH+" -S -c 32 -L 0.01 -N 10000 "+NEG_TEMPLATE_HMM+" tgf.tgf "+traindir+" 1000 "+outfile
+        cmd="cd "+HMM_DIR+" ; "+BAUMWELCH\
+            +" -s "+str(random.randint(0,1000000000))\
+            +" -S -c 32 -L 0.01 -N 10000 "+NEG_TEMPLATE_HMM+" tgf.tgf "\
+            +traindir+" 1000 "+outfile
         writer.addCommand(cmd)
         for rep in range(REPLICATES):
             traindir=TRAINING_SETS_POS+"/leaveout"+str(bin)
             outfile=HMM_DIR+"/crossval-pos-bin"+str(bin)+"-rep"+str(rep)+".hmm"
-            cmd="cd "+HMM_DIR+" ; "+BAUMWELCH+" -S -W -t tie.txt -c 32 -L 0.01 -N 10000 "+TEMPLATE_HMM+" tgf.tgf "+traindir+" 1000 "+outfile
+            cmd="cd "+HMM_DIR+" ; "+BAUMWELCH\
+                +" -s "+str(random.randint(0,1000000000))\
+                +" -S -W -t tie.txt -c 32 -L 0.01 -N 10000 "+TEMPLATE_HMM\
+                +" tgf.tgf "+traindir+" 1000 "+outfile
             writer.addCommand(cmd)
 writer.mem(5000)
 writer.nice(500)

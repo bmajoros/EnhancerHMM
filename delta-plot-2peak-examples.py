@@ -15,7 +15,7 @@ import sys
 import ProgramName
 
 #TIMEPOINTS=("t00","t05","t1","t2")
-TIMEPOINTS=("t05","t1","t2")
+TIMEPOINTS=("t05",)
 MUMMIE=os.environ["MUMMIE"]
 
 def emit(id,fastbDir,timepoint):
@@ -40,7 +40,8 @@ for line in IN:
     if(len(fields)!=12): continue
     (id,halfHour,oneHour)=fields[:3]
     halfHour=int(halfHour); oneHour=int(oneHour)
-    if(halfHour!=2): continue
+    #if(halfHour!=2): continue
+    if(halfHour!=1): continue
     for t in TIMEPOINTS:
         emit(id,fastb,t)
 IN.close()

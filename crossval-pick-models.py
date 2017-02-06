@@ -48,12 +48,13 @@ for slurm in slurms:
     if(pair is None): continue
     (bin,rep)=pair
     outfile=OUTPUTS+"/"+commandIndex+".output"
+    if(not os.path.exists(outfile)): continue
     LL=getLL(outfile)
     likelihoods[bin-1].append([rep,LL])
 for i in range(5):
     bin=likelihoods[i]
     bin.sort(key=lambda x: -x[1])
-    for elem in bin: print(elem[0],elem[1])
+    #for elem in bin: print(elem[0],elem[1])
     bestPair=bin[0]
     (rep,LL)=bestPair
     binNumber=i+1

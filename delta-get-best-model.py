@@ -11,10 +11,19 @@ from builtins import (bytes, dict, int, list, object, range, str, ascii,
 # The above imports should allow this program to run in both Python 2 and
 # Python 3.  You might need to update your version of module "future".
 import os
+import sys
+import ProgramName
 from Rex import Rex
 rex=Rex()
 
-BASE="/home/bmajoros/GGR/delta/slurms/train-slurms/outputs"
+#=========================================================================
+# main()
+#=========================================================================
+if(len(sys.argv)!=3):
+    exit(ProgramName.get()+" <outputs-dir> <top-N>\n")
+(BASE,N)=sys.argv[1:]
+
+#BASE="/home/bmajoros/GGR/delta/slurms/train-slurms/outputs"
 #BASE="/home/bmajoros/GGR/delta/slurms/train-full-slurms/outputs"
 files=os.listdir(BASE)
 models=[]
@@ -33,7 +42,7 @@ for file in files:
         bestModel=str(index)+".hmm"
         models.append([bestModel,LL])
 models.sort(key=lambda x: -x[1])
-for i in range(10):
+for i in range(int(N)):
     pair=models[i]
     (file,LL)=pair
     print(file,LL,sep="\t")
