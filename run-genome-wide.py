@@ -102,6 +102,20 @@ def process(dir,posHMM,negHMM,label):
 
 def getParse(path):
     sections=getSections(path)
+    parse=""
+    pos=0
+    for section in sections:
+        L=len(section)
+        type=section[0]
+        if(len(parse)>0): parse+="|"
+        begin=pos
+        end=pos+L
+        parse+=str(type)+":"+str(begin)+"-"+str(end)
+        pos+=L
+    return parse
+
+def getParse_old(path):
+    sections=getSections(path)
     if(len(sections)!=5):
         print(path)
         print(sys.argv)
@@ -138,7 +152,7 @@ for file in files:
     if(path[0]==1): whichPath="top"
     elif(path[0]==6): whichPath="middle"
     elif(path[0]==11): whichPath="bottom"
-    else: exit("can't identify path")
+    else: whichPath="unknown" #exit("can't identify path")
     (begin,end)=getForeground(path)
     if(begin is None or end is None):
         exit("bad path: "+str(path)+"\n"+fullPath+"\n")

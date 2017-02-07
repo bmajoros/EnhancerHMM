@@ -9,7 +9,7 @@ if(length(args)!=2) {
 infile <- args[1]
 outfile <- args[2]
 
-maxY <- 1.3
+maxY <- 2.5
 minY <- -1.4
 #maxY <- 2.0
 #minY <- -2.5

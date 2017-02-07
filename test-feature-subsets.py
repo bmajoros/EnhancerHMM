@@ -24,10 +24,11 @@ TRAIN_NEG=DELTA+"/fastb/crossval/training-sets/neg"
 TEST_POS=DELTA+"/fastb/crossval/partitions/pos"
 TEST_NEG=DELTA+"/fastb/crossval/partitions/neg"
 TEMP_POS_HMM=DELTA+"/hmm/subset-pos.hmm"
-TEMP_POS_HMM=DELTA+"/hmm/subset-neg.hmm"
+TEMP_NEG_HMM=DELTA+"/hmm/subset-neg.hmm"
 TEMP_POS_TEST=DELTA+"/subset-pos"
 TEMP_NEG_TEST=DELTA+"/subset-neg"
 MUMMIE=os.environ["MUMMIE"]
+BAUMWELCH=MUMMIE+"/baum-welch"
 
 # Feature sets
 ALL_FEATURES=["DNase.t00", "H3K27ac.t00", "H3K4me1.t00", "H3K4me2.t00", 
@@ -43,7 +44,7 @@ H3K4ME2=["H3K4me2.t00", "H3K4me2.t3"]
 DNASE=["DNase.t00", "DNase.t3"]
 
 def System(cmd):
-    print(cmd)
+    print(cmd+"\n")
     #os.system(cmd)
 
 def getDTRK(features):
@@ -55,9 +56,12 @@ def getDTRK(features):
     return DTRK
 
 def subsetModel(originalModel,newModel,keepFeatures):
-    DTRK=getDTRK(features)
+    DTRK=getDTRK(keepFeatures)
     System("cp "+originalModel+" "+newModel)
-    System(MUMMIE+"/hmm-edit "+newModel+" "+DTRK)
+    if(len(DTRK)>0):
+        System(MUMMIE+"/hmm-edit "+newModel+" "+DTRK)
+        return True
+    return False
 
 def retrainModel(model,fastb):
     TGF=DELTA+"/hmm/tgf.tgf"
@@ -69,15 +73,22 @@ def retrainModel(model,fastb):
     System(cmd)
     System("mv "+temp+" "+model)
 
+def listToString(features):
+    s=""
+    for f in features: s+=f+" "
+    return s
+
 def subsetFastb(fastbDir,keepFeatures,outDir):
+    System("rm "+outDir+"/*.fastb")
     cmd=MUMMIE+"/fastb-extract-tracks-dir.pl "+fastbDir+" "+outDir+" "\
-        +keepFeatures
+        +listToString(keepFeatures)
     System(cmd)
 
-def getAUC(posHMM,negHMM,posFastb,negFastb)
-    cmd=DELTA+"/src/delta-test.py "+posHMM+" "+negHMM+" "+posFASTB+" "\
-        +negFASTB+" > roc.tmp; roc.pl roc.tmp > subset.roc"
+def getAUC(posHMM,negHMM,posFastb,negFastb):
+    cmd=DELTA+"/src/delta-test.py "+posHMM+" "+negHMM+" "+posFastb+" "\
+        +negFastb+" > roc.tmp"
     System(cmd)
+    System("roc.pl roc.tmp > subset.roc")
     System("area-under-ROC.pl subset.roc > auc.txt")
     auc=loadAUC()
 
@@ -86,24 +97,27 @@ def loadAUC():
         line=IN.readline()
         auc=int(line.rstrip())
         return auc
+    exit("can't load auc")
 
 def test(features,label,posHMM,negHMM,posTrain,negTrain,posTest,negTest):
-    subsetModel(posHMM,TEMP_POS_HMM,features)
-    subsetModel(negHMM,TEMP_NEG_HMM,features)
-    retrainModel(TEMP_POS_HMM,posTrain)
-    retrainModel(TEMP_NEG_HMM,negTrain)
+    if(subsetModel(posHMM,TEMP_POS_HMM,features)):
+        retrainModel(TEMP_POS_HMM,posTrain)
+    if(subsetModel(negHMM,TEMP_NEG_HMM,features)):
+        retrainModel(TEMP_NEG_HMM,negTrain)
     subsetFastb(posTest,features,TEMP_POS_TEST)
     subsetFastb(negTest,features,TEMP_NEG_TEST)
-    getAUC(posHMM,negHMM,TEMP_POS_TEST,TEMP_NEG_TEST)
+    auc=getAUC(TEMP_POS_HMM,TEMP_NEG_HMM,TEMP_POS_TEST,TEMP_NEG_TEST)
+    print(label,auc,sep="\t")
 
-def testPartition(features,label,partition):
+def testPartition(partition):
     i=partition-1
-    posHMM=HMM_DIR+"/crossval-pos-bin"+partition+"-rep"+BEST_MODELS[i]+".hmm"
-    negHMM=HMM_DIR+"/crossval-neg-bin"+partition+".hmm"
-    posTrain=TRAIN_POS+"/leaveout"+partition
-    negTrain=TRAIN_NEG+"/leaveout"+partition
-    posTest=TEST_POS+"/"+partition
-    negTest=TEST_NEG+"/"+partition
+    posHMM=HMM_DIR+"/crossval-pos-bin"+str(partition)+"-rep"\
+        +str(BEST_MODELS[i])+".hmm"
+    negHMM=HMM_DIR+"/crossval-neg-bin"+str(partition)+".hmm"
+    posTrain=TRAIN_POS+"/leaveout"+str(partition)
+    negTrain=TRAIN_NEG+"/leaveout"+str(partition)
+    posTest=TEST_POS+"/"+str(partition)
+    negTest=TEST_NEG+"/"+str(partition)
     test(ALL_FEATURES,"full_model",posHMM,negHMM,posTrain,negTrain,
          posTest,negTest)
     test(TIME0_FEATURES,"all_t00",posHMM,negHMM,posTrain,negTrain,

@@ -21,8 +21,9 @@ FASTB=BASE+"/delta-fastb"
 #POS_HMM=BASE+"/hmm/trained-nomotif.hmm"
 #POS_HMM=BASE+"/hmm/twopaths-bestLL.hmm"
 #POS_HMM=BASE+"/hmm/threepaths-best.hmm"
-POS_HMM=BASE+"/hmm/1path-best-full.hmm"
+POS_HMM=BASE+"/hmm/pentagram-best.hmm"
 NEG_HMM=BASE+"/hmm/trained-neg-nomotif.hmm"
+#NEG_HMM=BASE+"/hmm/neg-full.hmm"
 PARTITIONS=BASE+"/fastb-partitions"
 
 writer=SlurmWriter()
