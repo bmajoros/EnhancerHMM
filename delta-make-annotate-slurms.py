@@ -15,17 +15,16 @@ from Rex import Rex
 rex=Rex()
 
 #CLASSES="0,2,3,2,3,2,1,2,3,2,1"
-CLASSES="0,1,2,3,2,1,1,2,3,2,1,2,3,2,3,2"
+#CLASSES="0,1,2,3,2,1,1,2,3,2,1,2,3,2,3,2"
+CLASSES="0,1,2,3,2,1"
 MUMMIE=os.environ["MUMMIE"]
 BASE="/home/bmajoros/GGR/delta"
-SLURM_DIR=BASE+"/slurms/annotate-threepath-slurms"
+SLURM_DIR=BASE+"/slurms/annotate-slurms"
 PROGRAM=BASE+"/src/annotate-partition.pl"
 FASTB=BASE+"/delta-fastb"
-#POS_HMM=BASE+"/hmm/twopaths-bestLL.hmm"
-POS_HMM=BASE+"/hmm/threepaths-best.hmm"
+POS_HMM=BASE+"/hmm/loopy-1path-trained2.hmm"
 PARTITIONS=BASE+"/fastb-partitions"
-#OUTDIR=BASE+"/annotated-twopath"
-OUTDIR=BASE+"/annotated-threepath"
+OUTDIR=BASE+"/annotated-loopy"
 
 writer=SlurmWriter()
 lists=os.listdir(PARTITIONS)

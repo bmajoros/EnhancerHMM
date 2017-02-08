@@ -18,7 +18,7 @@ from Pipe import Pipe
 NUM_PARTITIONS=5
 DELTA="/home/bmajoros/GGR/delta"
 HMM_DIR=DELTA+"/hmm/crossval/best"
-BEST_MODELS=(210,110,33,214,249)
+BEST_MODELS=(133,286,183,214,57)
 TRAIN_POS=DELTA+"/fastb/crossval/training-sets/pos"
 TRAIN_NEG=DELTA+"/fastb/crossval/training-sets/neg"
 TEST_POS=DELTA+"/fastb/crossval/partitions/pos"
@@ -27,6 +27,7 @@ TEMP_POS_HMM=DELTA+"/hmm/subset-pos.hmm"
 TEMP_NEG_HMM=DELTA+"/hmm/subset-neg.hmm"
 TEMP_POS_TEST=DELTA+"/subset-pos"
 TEMP_NEG_TEST=DELTA+"/subset-neg"
+TEMP_FASTB=DELTA+"/temp-fastb"
 MUMMIE=os.environ["MUMMIE"]
 BAUMWELCH=MUMMIE+"/baum-welch"
 
@@ -45,7 +46,7 @@ DNASE=["DNase.t00", "DNase.t3"]
 
 def System(cmd):
     print(cmd+"\n")
-    #os.system(cmd)
+    os.system(cmd)
 
 def getDTRK(features):
     keep=set()
@@ -63,13 +64,17 @@ def subsetModel(originalModel,newModel,keepFeatures):
         return True
     return False
 
-def retrainModel(model,fastb):
-    TGF=DELTA+"/hmm/tgf.tgf"
+def retrainModel(model,fastb,features,tempDir):
+    subsetFastb(fastb,features,tempDir)
+    System(MUMMIE+"/get-schema.pl "+TEMP_FASTB+" > "+DELTA+"/hmm/tmp.schema")
+    System(MUMMIE+"/make-tgf.pl "+DELTA+"/hmm/tmp.schema full "
+           +DELTA+"/hmm/tmp.tgf")
+    TGF=DELTA+"/hmm/tmp.tgf"
     TIE=DELTA+"/hmm/tie.txt"
     temp="temp.hmm"
     cmd=BAUMWELCH\
         +" -S -W -t "+TIE+" -c 32 -L 0.01 -N 10000 "\
-        +model+" "+TGF+" "+fastb+" 1000 "+temp
+        +model+" "+TGF+" "+tempDir+" 1000 "+temp
     System(cmd)
     System("mv "+temp+" "+model)
 
@@ -91,23 +96,24 @@ def getAUC(posHMM,negHMM,posFastb,negFastb):
     System("roc.pl roc.tmp > subset.roc")
     System("area-under-ROC.pl subset.roc > auc.txt")
     auc=loadAUC()
+    return auc
 
 def loadAUC():
     with open("auc.txt","rt") as IN:
         line=IN.readline()
-        auc=int(line.rstrip())
+        auc=float(line.rstrip())
         return auc
     exit("can't load auc")
 
 def test(features,label,posHMM,negHMM,posTrain,negTrain,posTest,negTest):
     if(subsetModel(posHMM,TEMP_POS_HMM,features)):
-        retrainModel(TEMP_POS_HMM,posTrain)
+        retrainModel(TEMP_POS_HMM,posTrain,features,TEMP_FASTB)
     if(subsetModel(negHMM,TEMP_NEG_HMM,features)):
-        retrainModel(TEMP_NEG_HMM,negTrain)
+        retrainModel(TEMP_NEG_HMM,negTrain,features,TEMP_FASTB)
     subsetFastb(posTest,features,TEMP_POS_TEST)
     subsetFastb(negTest,features,TEMP_NEG_TEST)
     auc=getAUC(TEMP_POS_HMM,TEMP_NEG_HMM,TEMP_POS_TEST,TEMP_NEG_TEST)
-    print(label,auc,sep="\t")
+    print("EVAL",label,auc,sep="\t")
 
 def testPartition(partition):
     i=partition-1

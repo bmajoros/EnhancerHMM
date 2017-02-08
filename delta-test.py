@@ -13,6 +13,7 @@ from builtins import (bytes, dict, int, list, object, range, str, ascii,
 import sys
 import os
 from Pipe import Pipe
+import ProgramName
 
 BASE="/home/bmajoros/GGR/delta"
 #HMM_DIR=BASE+"/hmm"
