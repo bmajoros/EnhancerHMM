@@ -36,18 +36,16 @@ def scorePeak(peak,motifsDir):
 #=========================================================================
 # main()
 #=========================================================================
-if(len(sys.argv)!=3):
-    exit(ProgramName.get()+" <predictions.bed> <motifs-dir>\n")
-(predictionsBed,motifsDir)=sys.argv[1:]
+if(len(sys.argv)!=4):
+    exit(ProgramName.get()+" <predictions.bed> <motifs-dir> <margin>\n")
+(predictionsBed,motifsDir,margin)=sys.argv[1:]
+margin=int(margin)
 
 predictions=BedReader.readAll(predictionsBed)
 for peak in predictions:
-
-    ###
-    peak.interval.begin=peak.interval.intCenter()-100
-    peak.interval.end=peak.interval.intCenter()+100
-    ###
-
+    if(margin>0):
+        peak.interval.begin=peak.interval.intCenter()-margin
+        peak.interval.end=peak.interval.intCenter()+margin
     score=scorePeak(peak,motifsDir)
     print(score)
 
