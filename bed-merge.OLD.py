@@ -17,23 +17,22 @@ if(len(sys.argv)!=2):
     exit(sys.argv[0]+" <in.bed>")
 infile=sys.argv[1]
 
-hash=BedReader.hashBySubstrate(infile)
-for key in hash:
-    records=hash[key]
-    records.sort(key=lambda x: x.interval.begin)
-    L=len(records)
-    i=0
-    while(i+1<L):
-        thisRec=records[i]
-        nextRec=records[i+1]
-        if(thisRec.interval.overlaps(nextRec.interval)):
-            thisRec.score=max(thisRec.score,nextRec.score)
-            thisRec.interval.end=nextRec.interval.end
-            del records[i+1]
-            L-=1
-            continue
-        i+=1
-    for rec in records:
-        print(rec.chr+"\t"+str(rec.interval.begin)+"\t"+str(rec.interval.end)
-              +"\t"+rec.name+"\t"+str(rec.score))
+records=BedReader.readAll(infile)
+records.sort(key=lambda x: x.interval.begin)
+L=len(records)
+i=0
+while(i+1<L):
+    thisRec=records[i]
+    nextRec=records[i+1]
+    if(thisRec.interval.overlaps(nextRec.interval)):
+        thisRec.score=max(thisRec.score,nextRec.score)
+        thisRec.interval.end=nextRec.interval.end
+        del records[i+1]
+        L-=1
+        continue
+    i+=1
+
+for rec in records:
+    print(rec.chr+"\t"+str(rec.interval.begin)+"\t"+str(rec.interval.end)
+          +"\t"+rec.name+"\t"+str(rec.score))
 
