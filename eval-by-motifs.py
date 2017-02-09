@@ -22,6 +22,7 @@ def scorePeak(peak,motifsDir):
     chr=peak.chr
     if(rex.find("(\S+).t\d+",chr)): chr=rex[1]
     motifFile=motifsDir+"/"+chr+".standardized_across_all_timepoints.t00.fastb"
+    if(not os.path.exists(motifFile)): return -1
     fastb=Fastb(motifFile)
     count=0
     for i in range(fastb.numTracks()):
@@ -41,13 +42,17 @@ if(len(sys.argv)!=4):
 (predictionsBed,motifsDir,margin)=sys.argv[1:]
 margin=int(margin)
 
+notFound=0
 predictions=BedReader.readAll(predictionsBed)
 for peak in predictions:
     if(margin>0):
         peak.interval.begin=peak.interval.intCenter()-margin
         peak.interval.end=peak.interval.intCenter()+margin
     score=scorePeak(peak,motifsDir)
+    if(score<0):
+        notFound+=1
+        continue
     print(score)
-
+print(notFound,"not found",file=sys.stderr)
 
 
