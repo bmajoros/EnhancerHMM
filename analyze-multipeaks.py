@@ -16,9 +16,11 @@ from scipy.stats import mannwhitneyu
 from Interval import Interval
 from Shuffler import Shuffler
 from SummaryStats import SummaryStats
+from Pipe import Pipe
 from Rex import Rex
 rex=Rex()
 
+MIN_PEAK_LEN=250
 WANT_SHUFFLE=False
 MIN_DNASE=1.0 # standardized
 MIN_P300=1.0  # standardized
@@ -67,7 +69,7 @@ def load(filename):
         parseElems=parse.split("|")
         peaks=[]
         for parseElem in parseElems:
-            if(not rex.find("(\d+):(\d+)-(\d)",parseElem)):
+            if(not rex.find("(\d+):(\d+)-(\d+)",parseElem)):
                 raise Exception(parseElem)
             state=int(rex[1])
             if(state!=PEAK_STATE): continue
@@ -87,6 +89,7 @@ def load(filename):
             peak.p300_3=float(feats[3])
             peak.open=peak.dnase_3>=MIN_DNASE
             peak.active=peak.p300_3>=MIN_P300
+            peak.dex_responsive=peak.active and peak.p300_0<MIN_P300
             peak.nearInactive=False
             peak.nearActive=False
             if(peak.active and not peak.open): activeButClosed+=1
@@ -98,6 +101,10 @@ def load(filename):
             if(FOX[i]=="1"): peak.motifs.add("FOX")
             if(KLF[i]=="1"): peak.motifs.add("KLF")
             if(CTCF[i]=="1"): peak.motifs.add("CTCF")
+        filtered=[]
+        for peak in peaks:
+            if(peak.length()>=MIN_PEAK_LEN): filtered.append(peak)
+        peaks=filtered
         enhancers.append(Enhancer(substrate,peaks))
         N=len(peaks)
         for i in range(N):
@@ -140,7 +147,8 @@ def analyzeInactives(multipeaks,verbose):
        totalActive+=enhancer.numActivePeaks()
        totalInactive+=enhancer.numInactivePeaks()
     if(verbose):
-        print("withInactive="+str(withInactive)+"\twithActive="+str(withActive))
+        print("withInactive="+str(withInactive)+"\twithActive="+
+              str(withActive))
         print("N="+str(N)+"\twithBoth="+str(withBoth))
         print("total active=",totalActive,"total inactive=",totalInactive)
     return (withActive,withInactive,withBoth,N)
@@ -184,7 +192,8 @@ def computePvalues(withActive,withInactive,withBoth):
     (P,count)=getPvalue(randomWithActive,withActive)
     print("P-value for active:",P,str(count)+"/"+str(len(randomWithActive)))
     (P,count)=getPvalue(randomWithInactive,withInactive)
-    print("P-value for inactive:",P,str(count)+"/"+str(len(randomWithInactive)))
+    print("P-value for inactive:",P,str(count)+"/"
+          +str(len(randomWithInactive)))
 
 def mergeData(enhancers,raw):
     results=[]
@@ -246,6 +255,53 @@ def writeValues(values,filename):
         OUT.write(str(value)+"\n")
     OUT.close()
 
+def analyzeInactiveMotifs(multipeaks):
+    analyzeMotif(multipeaks,"GR")
+    analyzeMotif(multipeaks,"AP1")
+    analyzeMotif(multipeaks,"CEBP")
+    analyzeMotif(multipeaks,"FOX")
+    analyzeMotif(multipeaks,"KLF")
+    analyzeMotif(multipeaks,"CTCF")
+
+def analyzeMotif(multipeaks,motif):
+    table=[[0,0],[0,0]]
+    for enhancer in multipeaks:
+        for peak in enhancer.peaks:
+            x=1 if peak.active else 0
+            #x=1 if peak.dex_responsive else 0
+            y=1 if motif in peak.motifs else 0
+            table[x][y]+=1
+    fisher(table,motif)
+
+def fisher(table,label):
+    a=table[0][0]
+    b=table[0][1]
+    c=table[1][0]
+    d=table[1][1]
+    cmd="/home/bmajoros/src/scripts/fisher-exact-test.R "+str(a)+" "+\
+        str(b)+" "+str(c)+" "+str(d)
+    line=Pipe.run(cmd)
+    P=float(line.rstrip())
+    N=float(a+b+c+d)
+    totalActive=table[1][0]+table[1][1]
+    totalMotif=table[0][1]+table[1][1]
+    exp11=int(totalActive/N*totalMotif)
+    exp01=int((1.0-totalActive/N)*totalMotif)
+    print(label+" P="+str(P)+"\tActive exp="+str(exp11)+" obs="
+          +str(table[1][1])+"\tInactive exp="+str(exp01)+" obs="
+          +str(table[0][1]))
+    return P
+
+def dumpArrangements(multipeaks):
+    for enhancer in multipeaks:
+        for peak in enhancer.peaks:
+            #if(peak.active):
+            if(peak.dex_responsive):
+                print("1",end="")
+            else:
+                print("0",end="")
+        print()
+
 #=========================================================================
 # main()
 #=========================================================================
@@ -261,7 +317,17 @@ enhancers=mergeData(enhancers,rawEnhancers)
 # Analyze patterns
 multipeaks=getMultipeaks(enhancers)
 #(withActive,withInactive,withBoth,N)=analyzeInactives(multipeaks,True)
-#singletons=getSingletons(enhancers)
+#dumpArrangements(multipeaks)
+#exit()
+
+singletons=getSingletons(enhancers)
+print("multipeaks:")
+analyzeInactiveMotifs(multipeaks)
+print("singletons:")
+analyzeInactiveMotifs(singletons)
+
+exit()
+
 p300Inactive=getP300nearInactive(multipeaks)
 p300NoInactive=getP300notNearInactive(multipeaks)
 (U,P)=mannwhitneyu(p300Inactive,p300NoInactive)
