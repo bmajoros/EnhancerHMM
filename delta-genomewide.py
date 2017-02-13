@@ -32,16 +32,7 @@ def loadList(infile):
                 peaks.append(line)
     return peaks
 
-#def getPeakList(dir):
-#    peaks=[]
-#    files=os.listdir(dir)
-#    for file in files:
-#        if(rex.find("(\S+)\.standard.*\.t00",file)):
-#            peaks.append(rex[1])
-#    return peaks
-
 def process(peaks,indir,outdir):
-    #peaks=getPeakList(indir)
     for peak in peaks:
         for timepoint in TIMEPOINTS:
             in1=indir+"/"+peak+".standardized_across_all_timepoints.t00.fastb"

@@ -16,7 +16,8 @@ rex=Rex()
 
 BASE="/home/bmajoros/GGR/delta"
 SLURM_DIR=BASE+"/slurms/run-genomewide-slurms"
-PROGRAM=BASE+"/src/run-genome-wide.py"
+#PROGRAM=BASE+"/src/run-genome-wide.py"
+PROGRAM=BASE+"/src/loopy-genomewide.py"
 FASTB=BASE+"/delta-fastb"
 #POS_HMM=BASE+"/hmm/trained-nomotif.hmm"
 #POS_HMM=BASE+"/hmm/twopaths-bestLL.hmm"

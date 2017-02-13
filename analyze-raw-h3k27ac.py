@@ -17,19 +17,53 @@ from Fastb import Fastb
 from Rex import Rex
 rex=Rex()
 
+CHIPS=("H3K27ac",)
+TRACK_NAME="H3K27ac"
+MOTIF_ONLY=False
 MARGIN=100
-P300_DIR="/data/reddylab/projects/GGR/subprojects/hmm/data/EP300_not_standardized"
+CHIP_DIR="/data/reddylab/projects/GGR/data/hmm/preprocessing/EP300_not_standardized/split_fastb"
+MOTIFS_DIR="/home/bmajoros/GGR/delta/motifs-continuous"
+
+def getMotifs(trackName,peakID):
+    filename=MOTIFS_DIR+"/"\
+        +peakID+".standardized_across_all_timepoints.t00.fastb"
+    fastb=Fastb(filename)
+    track=fastb.getTrackByName(trackName)
+    hits=track.getNonzeroRegions()
+    return hits
+
+def annotateMotifs(peaks,peakID):
+    motifs=getMotifs(TRACK_NAME,peakID)
+    for peak in peaks:
+        peak.motif=False
+        interval=peak
+        interval.begin=interval.intCenter()-100
+        interval.end=interval.intCenter()+100
+        for motif in motifs:
+            if(motif.overlaps(interval)): peak.motif=True
 
 def process(peakID,parse,scores):
-    p300file=P300_DIR+"/"+peakID+".fastb"
     peaks=getPeaks(parse)
-    fastb=Fastb(p300file)
-    getP300scores(peaks,fastb)
+    if(MOTIF_ONLY): annotateMotifs(peaks,peakID)
+    processCHIP(peaks,peakID)
     numPeaks=len(peaks)
     for peak in peaks:
+        if(MOTIF_ONLY and peak.motif==False): continue
         print(peak.score,numPeaks,peak.length(),sep="\t")
         if(scores.get(peakID,None) is None): scores[peakID]=[]
         scores[peakID].append(peak.score)
+
+def processCHIP(peaks,peakID):
+    for chip in CHIPS:
+        chipfile=CHIP_DIR+"/"+chip+"."+TIME+"."+peakID+".fastb"
+        fastb=Fastb(chipfile)
+        getCHIPscores(peaks,fastb,chip)
+
+def getCHIPscores(peaks,fastb,CHIP_NAME):
+    track=fastb.getTrackByName(CHIP_NAME)
+    for peak in peaks:
+        array=track.data[peak.begin:peak.end]
+        peak.score+=max(array)
 
 def getPeaks(parse):
     peaks=[]
@@ -47,14 +81,10 @@ def getPeaks(parse):
             begin=mid-MARGIN
             end=mid+MARGIN
         if(begin<0 or end>2000): continue
-        peaks.append(Interval(begin,end))
+        peak=Interval(begin,end)
+        peak.score=0.0
+        peaks.append(peak)
     return peaks
-
-def getP300scores(peaks,fastb):
-    track=fastb.getTrackByName("EP300")
-    for peak in peaks:
-        array=track.data[peak.begin:peak.end]
-        peak.score=max(array)
 
 #=========================================================================
 # main()
@@ -73,11 +103,12 @@ for line in IN:
     (fastb,b,e,taskID,LLR,P,parse,top)=fields
     if(LLR<threshold): continue
     if(rex.find("(\S+)\.fastb",fastb)): fastb=rex[1]
-    if(rex.find("\S+\.(t\d+)",fastb) and rex[1]!=TIME): continue
-    process(fastb,parse,scoreSets)
+    if(rex.find("(\S+)\.(t\d+)",fastb) and rex[2]!=TIME): continue
+    process(rex[1],parse,scoreSets)
 IN.close()
 
-OUT=open("p300-sums.txt","wt")
+filename="ap1-sums-motif.txt" if MOTIF_ONLY else "ap1-sums.txt"
+OUT=open(filename,"wt")
 for key in scoreSets.keys():
     total=sum(scoreSets[key])
     N=len(scoreSets[key])

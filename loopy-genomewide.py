@@ -19,10 +19,14 @@ import SumLogProbs
 from Interval import Interval
 import ProgramName
 import TempFilename
+from Fastb import Fastb
 from Rex import Rex
 rex=Rex()
 MUMMIE=os.environ["MUMMIE"]
 
+MOTIFS_DIR="/home/bmajoros/GGR/delta/motifs-continuous"
+RAW="/data/reddylab/projects/GGR/subprojects/hmm/data/EP300_not_standardized"
+PEAK_STATE=3
 fgPrior=math.log(0.5)
 bgPrior=math.log(0.5)
 
@@ -73,21 +77,6 @@ def getSections(path):
     if(len(elem)>0): sections.append(elem)
     return sections
 
-def getForeground(path):
-    sections=getSections(path)
-    begin=None
-    end=None
-    pos=0
-    for section in sections:
-        L=len(section)
-        type=section[0]
-        if(type>1 and type<5 or type>6 and type<10 or type>11 and type<15):
-            if(begin is None): begin=pos
-        elif(type==5 or type==10 or type==15): end=pos
-        pos+=L
-    if(end is None): end=pos
-    return (begin,end)
-
 def process(dir,posHMM,negHMM,label):
   files=os.listdir()
   n=len(files)
@@ -133,6 +122,69 @@ def getParse_old(path):
         pos+=L
     return parse
 
+def getPeaks(parse):
+    fields=parse.split("|")
+    peaks=[]
+    for field in fields:
+        if(not rex.find("(\d+):(\d+)-(\d+)",field)):
+            raise Exception("can't parse "+field)
+        state=int(rex[1])
+        if(state!=PEAK_STATE): continue
+        begin=int(rex[2]); end=int(rex[3])
+        peaks.append(Interval(begin,end))
+    return peaks
+
+def getFeature(fastb,interval,label):
+    track=fastb.getTrackByName(label)
+    return str(track.getMax(interval)[0])
+
+def getFeatures_raw(peaks,dir,file):
+    if(not rex.find("(\S+)\.(t\d+)\.fastb",file)):
+        raise Excpetion(file)
+    id=rex[1]; time=rex[2]
+    if(not os.path.exists(dir+"/"+id+".t00.fastb") or
+       not os.path.exists(dir+"/"+file)): return None
+    fastb0=Fastb(dir+"/"+id+".t00.fastb")
+    fastb1=Fastb(dir+"/"+file)
+    features=""
+    for peak in peaks:
+        if(len(features)>0): features+="|"
+        features+=getFeature(fastb0,peak,"DNase")+","
+        features+=getFeature(fastb1,peak,"DNase")+","
+        features+=getFeature(fastb0,peak,"EP300")+","
+        features+=getFeature(fastb1,peak,"EP300")
+    return features
+
+def getFeatures_standardized(peaks,dir,file):
+    if(not os.path.exists(dir+"/"+file)): return None
+    fastb=Fastb(dir+"/"+file)
+    features=""
+    for peak in peaks:
+        if(len(features)>0): features+="|"
+        features+=getFeature(fastb,peak,"DNase.t00")+","
+        features+=getFeature(fastb,peak,"DNase.t3")+","
+        features+=getFeature(fastb,peak,"EP300.t00")+","
+        features+=getFeature(fastb,peak,"EP300.t3")
+    return features
+
+def getMotif(file,peaks,label):
+    if(not rex.find("(\S+)\.t",file)): raise Exception(file)
+    id=rex[1]
+    motifFile=MOTIFS_DIR+"/"+id+".standardized_across_all_timepoints.t00.fastb"
+    fastb=Fastb(motifFile)
+    track=fastb.getTrackByName(label)
+    nonzeros=track.getNonzeroRegions()
+    result=[0]*len(peaks)
+    for i in range(len(peaks)):
+        peak=peaks[i]
+        for motif in nonzeros:
+            if(motif.overlaps(peak)):
+                result[i]=1
+                break
+    s=""
+    for r in result: s+=str(r)
+    return s
+
 #=========================================================================
 # main()
 #=========================================================================
@@ -144,25 +196,26 @@ files=[]
 with open(fileList,"rt") as IN:
     for line in IN:
         files.append(line.rstrip())
-nextID=1
+#nextID=1
 for file in files:
     fullPath=inDir+"/"+file
     path=getPath(fgHMM,fullPath)
-    whichPath=None;
-    if(path[0]==1): whichPath="top"
-    elif(path[0]==6): whichPath="middle"
-    elif(path[0]==11): whichPath="bottom"
-    else: whichPath="unknown"
-    (begin,end)=getForeground(path)
-    if(begin is None or end is None):
-        exit("bad path: "+str(path)+"\n"+fullPath+"\n")
     parse=getParse(path)
-    L=end-begin
     llr=getLLR(fullPath)
     P=getPosterior(fullPath)
-    id="task"+taskID+"_elem"+str(nextID)
-    print(file+"\t"+str(begin)+"\t"+str(end)+"\t"+id+"\t"+str(llr)
-          +"\t"+str(P)+"\t"+parse+"\t"+whichPath,flush=True)
-    nextID+=1
+    peaks=getPeaks(parse)
+    #features=getFeatures_raw(peaks,RAW,file)
+    features=getFeatures_standardized(peaks,inDir,file)
+    if(features is None): continue
+    gr=getMotif(file,peaks,"GR/AR/MR")
+    ap1=getMotif(file,peaks,"AP1")
+    cebp=getMotif(file,peaks,"CEBP")
+    fox=getMotif(file,peaks,"FOX")
+    klf=getMotif(file,peaks,"KLF")
+    ctcf=getMotif(file,peaks,"CTCF")
+    #id="task"+taskID+"_elem"+str(nextID)
+    print(file+"\t"+str(llr)+"\t"+str(P)+"\t"+parse+"\t"+features+"\t"+
+          gr+"\t"+ap1+"\t"+cebp+"\t"+fox+"\t"+klf+"\t"+ctcf,flush=True)
+    #nextID+=1
 
 #########################################################################
