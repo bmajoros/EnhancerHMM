@@ -40,6 +40,21 @@ class Enhancer:
         for peak in self.peaks:
             if(peak.active): return True
         return False
+    def getResponsivePeaks(self):
+        ret=[]
+        for peak in self.peaks:
+            if(peak.dex_responsive): ret.append(peak)
+        return ret
+    def findResponsiveWithMotif(self,motif):
+        found=[]
+        for peak in self.peaks:
+            if(peak.dex_responsive and motif in peak.motifs):
+                found.append(peak)
+        return found
+    def hasPeakWithMotif(self,motif):
+        for peak in self.peaks:
+            if(motif in peak.motifs): return True
+        return False
     def numActivePeaks(self):
         count=0
         for peak in self.peaks:
@@ -92,6 +107,8 @@ def load(filename):
             peak.dex_responsive=peak.active and peak.p300_0<MIN_P300
             peak.nearInactive=False
             peak.nearActive=False
+            peak.nearResponsive=False
+            peak.nearNonResponsive=False
             if(peak.active and not peak.open): activeButClosed+=1
             if(peak.active): active+=1
             peak.motifs=set()
@@ -115,6 +132,12 @@ def load(filename):
             else:
                 if(i>0): peaks[i-1].nearInactive=True
                 if(i+1<N):peaks[i+1].nearInactive=True
+            if(peak.dex_responsive):
+                if(i>0): peaks[i-1].nearResponsive=True
+                if(i+1<N):peaks[i+1].nearResponsive=True
+            else:
+                if(i>0): peaks[i-1].nearNonResponsive=True
+                if(i+1<N):peaks[i+1].nearNonResponsive=True
     IN.close()
     #print("active:",active)
     #print("active but closed:",activeButClosed)
@@ -214,39 +237,41 @@ def mergeData(enhancers,raw):
 def getP300nearInactive(multipeaks):
     values=[]
     for enhancer in multipeaks:
-        if(not enhancer.hasInactive()): continue
         for peak in enhancer.peaks:
-            if(peak.active): values.append(peak.p300_3)
-    return values
-
-def getP300nearInactive(multipeaks):
-    values=[]
-    for enhancer in multipeaks:
-        for peak in enhancer.peaks:
-            if(peak.active and peak.nearInactive): values.append(peak.p300_3)
+            #if(peak.active and peak.nearInactive): values.append(peak.p300_3)
+            if(peak.dex_responsive and peak.nearNonResponsive):
+                #values.append(peak.p300_3)
+                values.append(peak.rawP300_3-peak.rawP300_0)
     return values
 
 def getP300notNearInactive(multipeaks):
     values=[]
     for enhancer in multipeaks:
         for peak in enhancer.peaks:
-            if(peak.active and not peak.nearInactive):
-                values.append(peak.p300_3)
+            #if(peak.active and not peak.nearInactive):
+            if(peak.dex_responsive and not peak.nearNonResponsive):
+                #values.append(peak.p300_3)
+                values.append(peak.rawP300_3-peak.rawP300_0)
     return values
 
 def getP300nearActive(multipeaks):
     values=[]
     for enhancer in multipeaks:
         for peak in enhancer.peaks:
-            if(peak.active and peak.nearActive): values.append(peak.p300_3)
+            #if(peak.active and peak.nearActive): values.append(peak.p300_3)
+            if(peak.dex_responsive and peak.nearResponsive):
+                #values.append(peak.p300_3)
+                values.append(peak.rawP300_3-peak.rawP300_0)
     return values
 
 def getP300notNearActive(multipeaks):
     values=[]
     for enhancer in multipeaks:
         for peak in enhancer.peaks:
-            if(peak.active and not peak.nearActive):
-                values.append(peak.p300_3)
+            #if(peak.active and not peak.nearActive):
+            if(peak.dex_responsive and not peak.nearResponsive):
+                #values.append(peak.p300_3)
+                values.append(peak.rawP300_3-peak.rawP300_0)
     return values
 
 def writeValues(values,filename):
@@ -302,6 +327,32 @@ def dumpArrangements(multipeaks):
                 print("0",end="")
         print()
 
+def analyzeAP1andGR(multipeaks):
+    (withGRnear,withoutGRnear)=countAP1nearGR(multipeaks)
+    array=[]
+    OUT=open("ap1_gr.temp","wt")
+    for i in range(1000):
+        shuffle(multipeaks)
+        (rand_withGR,rand_withoutGR)=countAP1nearGR(multipeaks)
+        array.append(rand_withoutGR)
+        OUT.write(str(rand_withoutGR)+"\n")
+    OUT.close()
+    (P,count)=getPvalue(array,withoutGRnear)
+    print("AP1 with GR near:",withGRnear,", without GR near:",withoutGRnear)
+    print("P-value (AP1 not near GR):",P,str(count)+"/"+str(len(array)))
+
+def countAP1nearGR(multipeaks):
+    nearGR=0; notNearGR=0
+    for enhancer in multipeaks:
+        actives=enhancer.findResponsiveWithMotif("AP1")
+        numActives=0
+        #for peak in actives:
+            #if "GR" not in peak.motifs: numActives+=1
+        numActives=len(actives)
+        if(enhancer.hasPeakWithMotif("GR")): nearGR+=numActives
+        else: notNearGR+=numActives
+    return (nearGR,notNearGR)
+
 #=========================================================================
 # main()
 #=========================================================================
@@ -320,33 +371,54 @@ multipeaks=getMultipeaks(enhancers)
 #dumpArrangements(multipeaks)
 #exit()
 
-singletons=getSingletons(enhancers)
-print("multipeaks:")
-analyzeInactiveMotifs(multipeaks)
-print("singletons:")
-analyzeInactiveMotifs(singletons)
+#analyzeAP1andGR(multipeaks)
 
-exit()
+if(False):
+    singletons=getSingletons(enhancers)
+    print("multipeaks:")
+    analyzeInactiveMotifs(multipeaks)
+    print("singletons:")
+    analyzeInactiveMotifs(singletons)
+    exit()
 
-p300Inactive=getP300nearInactive(multipeaks)
-p300NoInactive=getP300notNearInactive(multipeaks)
-(U,P)=mannwhitneyu(p300Inactive,p300NoInactive)
-(meanInactive,SD,min,max)=SummaryStats.roundedSummaryStats(p300Inactive)
-(meanNoInactive,SD,min,max)=SummaryStats.roundedSummaryStats(p300NoInactive)
-print("near inactive=",meanInactive,"not near inactive=",meanNoInactive,
-      "U=",U,"P=",P)
-writeValues(p300Inactive,"p300.inactive")
-writeValues(p300NoInactive,"p300.noinactive")
+if(True):
+    withMotif=[]
+    withoutMotif=[]
+    for enhancer in multipeaks:
+        peaks=enhancer.getResponsivePeaks()
+        for peak in peaks:
+            change=peak.rawP300_3-peak.rawP300_0
+            #if(enhancer.hasPeakWithMotif("CTCF")): withMotif.append(change)
+            #if("CTCF" in peak.motifs): withMotif.append(change)
+            if(enhancer.hasPeakWithMotif("CTCF") and "CTCF" not in peak.motifs): withMotif.append(change)
+            else: withoutMotif.append(change)
+    (U,P)=mannwhitneyu(withMotif,withoutMotif)
+    (meanWith,SD,min,max)=SummaryStats.roundedSummaryStats(withMotif)
+    (meanWithout,SD,min,max)=SummaryStats.roundedSummaryStats(withoutMotif)
+    print("with motif: ",meanWith,", without: ",meanWithout,
+          ", U=",U,", P=",P)
 
-p300Active=getP300nearActive(multipeaks)
-p300NoActive=getP300notNearActive(multipeaks)
-(U,P)=mannwhitneyu(p300Active,p300NoActive)
-(meanActive,SD,min,max)=SummaryStats.roundedSummaryStats(p300Active)
-(meanNoActive,SD,min,max)=SummaryStats.roundedSummaryStats(p300NoActive)
-print("near active=",meanActive,"not near active=",meanNoActive,
-      "U=",U,"P=",P)
-writeValues(p300Inactive,"p300.active")
-writeValues(p300NoInactive,"p300.noactive")
+if(False):
+    p300Inactive=getP300nearInactive(multipeaks)
+    p300NoInactive=getP300notNearInactive(multipeaks)
+    (U,P)=mannwhitneyu(p300Inactive,p300NoInactive)
+    (meanInactive,SD,min,max)=SummaryStats.roundedSummaryStats(p300Inactive)
+    (meanNoInactive,SD,min,max)=\
+        SummaryStats.roundedSummaryStats(p300NoInactive)
+    print("near inactive=",meanInactive,"not near inactive=",meanNoInactive,
+          "U=",U,"P=",P)
+    writeValues(p300Inactive,"p300.inactive")
+    writeValues(p300NoInactive,"p300.noinactive")
+
+    p300Active=getP300nearActive(multipeaks)
+    p300NoActive=getP300notNearActive(multipeaks)
+    (U,P)=mannwhitneyu(p300Active,p300NoActive)
+    (meanActive,SD,min,max)=SummaryStats.roundedSummaryStats(p300Active)
+    (meanNoActive,SD,min,max)=SummaryStats.roundedSummaryStats(p300NoActive)
+    print("near active=",meanActive,"not near active=",meanNoActive,
+          "U=",U,"P=",P)
+    writeValues(p300Inactive,"p300.active")
+    writeValues(p300NoInactive,"p300.noactive")
 
 # Shuffle to generate empirical P-values
 if(WANT_SHUFFLE):
