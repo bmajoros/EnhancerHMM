@@ -13,12 +13,43 @@ from builtins import (bytes, dict, int, list, object, range, str, ascii,
 import sys
 import ProgramName
 from Interval import Interval
+from Rex import Rex
+rex=Rex()
 
+MIN_PEAK_LEN=250
 MAX_DIST_TO_ANCHOR=1
 MAX_LINEAR_DIST=10000
 #MAX_LINEAR_DIST=35000
 MISSING=1000000000
 SEEN=set()
+
+def getNumPeaks(filename,whichTime):
+    # iter0_peak14413.t3.fastb        2234.2906200000034      1.0     1:0-1|2:1-2|3:2-1243|4:1243-1256|3:1256-1998|4:1998-1999|5:1999-2000    1.07942122577,1.12211048111,1.00477844983,1.16141454506|0.952633976593,1.02660980228,0.892990209161,0.961271510352      10      10      11      10      10      00
+    hash={} # maps enhancerID to P300 value
+    with open(filename) as IN:
+        for line in IN:
+            fields=line.rstrip().split()
+            if(len(fields)!=11): continue
+            (fastb,LLR,P,parse,features,GR,AP1,CEBP,FOX,KLF,CTCF)=fields
+            ### if(float(LLR)<1000): continue
+            if(not rex.find("(\S+)\.(t\d+)\.fastb",fastb)):
+                raise Exception(fastb)
+            enhancerID=rex[1]
+            time=rex[2]
+            if(time!=whichTime): continue
+            peakLengths=[]
+            fields=parse.split("|")
+            for field in fields:
+                if(not rex.find("(\d+):(\d+)-(\d+)",field)): exit(field)
+                state=int(rex[1]); begin=int(rex[2]); end=int(rex[3])
+                if(state==3): peakLengths.append(end-begin)
+            #fields=features.split("|")
+            #numPeaks=len(fields)
+            numPeaks=0
+            for L in peakLengths:
+                if(L>=MIN_PEAK_LEN): numPeaks+=1
+            hash[enhancerID]=numPeaks
+    return hash
 
 def loadLoops(filename):
     byChr={}
@@ -63,6 +94,7 @@ def loadTssFile(filename,byChr):
         interval=Interval(pos,pos+1)
         interval.type="gene"
         interval.id=id
+        interval.linkedTo=[]
         byChr[chr].append(interval)        
     IN.close()
 
@@ -92,6 +124,8 @@ def loadEnhancers(filename,byChr):
         interval.end=interval.intCenter()+1000
         interval.type="enhancer"
         interval.id=id
+        interval.numPeaks=-1
+        interval.linkedTo=[]
         if(hash.get(chr,None) is None): hash[chr]=[]
         hash[chr].append(interval)
     deduplicateEnhancers(hash)
@@ -234,22 +268,86 @@ def getPairKeys(objects1,objects2,type1,type2,pairs):
                 if(a.id>b.id): c=a; a=b; b=c
             key=a.id+" "+b.id
             pairs.add(key)
-                
+
+def pairWithEnhancers(byChr,numPeaksHash):
+    for chr in byChr.keys():
+        array=byChr[chr]
+        for anchor in array:
+            if(anchor.type!="anchor"): continue
+            for enhancer in anchor.objects:
+                if(enhancer.type!="enhancer"): continue
+                if(numPeaksHash.get(enhancer.id,None) is None):
+                    enhancer.numPeaks=0
+                else: enhancer.numPeaks=numPeaksHash[enhancer.id]
+                for object in anchor.mate.objects:
+                    enhancer.linkedTo.append(object)
+            for gene in anchor.objects:
+                if(gene.type!="gene"): continue
+                for object in anchor.mate.objects:
+                    gene.linkedTo.append(object)
+
+def getDumpType(object):
+    if(object.type=="enhancer"):
+        if(object.numPeaks<1): return "bad"
+        elif(object.numPeaks==1): return "singleton"
+        return "multipeak"
+    return object.type
+
+def dumpLinks(byChr):
+    numSingletons=0
+    numMultipeaks=0
+    numGenes=0
+    counts={}
+    for chr in byChr.keys():
+        for enhancer in byChr[chr]:
+            if(enhancer.type!="enhancer" or enhancer.numPeaks<1): continue
+            if(enhancer.numPeaks==1): numSingletons+=1
+            if(enhancer.numPeaks>1): numMultipeaks+=1
+            fromType=getDumpType(enhancer)
+            mates=enhancer.linkedTo
+            for mate in mates:
+                toType=getDumpType(mate)
+                if(toType=="bad"): continue
+                if(counts.get(fromType,None) is None):
+                    counts[fromType]={}
+                counts[fromType][toType]=counts[fromType].get(toType,0)+1
+        for gene in byChr[chr]:
+            if(gene.type!="gene"): continue
+            numGenes+=1
+            mates=gene.linkedTo
+            for mate in mates:
+                toType=getDumpType(mate)
+                if(toType=="bad"): continue
+                if(counts.get("gene",None) is None):
+                    counts["gene"]={}
+                counts["gene"][toType]=counts["gene"].get(toType,0)+1
+    print(numSingletons,"total singletons")
+    print(numMultipeaks,"total multipeaks")
+    print(numGenes,"total genes")
+    fromTypes=counts.keys()
+    for fromType in fromTypes:
+        hash=counts[fromType]
+        toTypes=hash.keys()
+        for toType in toTypes:
+            count=hash[toType]
+            print(fromType,toType,count,sep="\t")
+
 #=========================================================================
 # main()
 #=========================================================================
-if(len(sys.argv)!=4):
-    exit(ProgramName.get()+" <enhancers.bed> <tss.txt> <loops.txt>\n")
-(enhancerFile,tssFile,loopFile)=sys.argv[1:]
+if(len(sys.argv)!=5):
+    exit(ProgramName.get()+" <genomewide-features.txt> <enhancers.bed> <tss.txt> <loops.txt>\n")
+(featuresFile,enhancerFile,tssFile,loopFile)=sys.argv[1:]
 
+numPeaksHash=getNumPeaks(featuresFile,"t05")
 byChr=loadLoops(loopFile)
 loadTssFile(tssFile,byChr)
 loadEnhancers(enhancerFile,byChr)
 sortArrays(byChr)
 assignToAnchors("enhancer",byChr)
 assignToAnchors("gene",byChr)
-emitPairs(byChr)
-#emitByProximity(byChr)
+pairWithEnhancers(byChr,numPeaksHash)
+dumpLinks(byChr)
 
 #print("gene-gene:",countPairs("gene","gene",byChr))
 #print("enhancer-enhancer:",countPairs("enhancer","enhancer",byChr))
