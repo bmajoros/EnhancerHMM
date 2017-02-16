@@ -16,7 +16,7 @@ from Rex import Rex
 rex=Rex()
 
 SINGLE_PEAK_ONLY=False
-MULTI_PEAK_ONLY=False
+MULTI_PEAK_ONLY=True
 
 def loadLoopFile(filename):
     hash={} # maps genes to enhancers
@@ -25,7 +25,8 @@ def loadLoopFile(filename):
             fields=line.rstrip().split()
             if(len(fields)!=2): continue
             (gene,peak)=fields
-            hash[gene]=peak
+            if(hash.get(gene,None) is None): hash[gene]=[]
+            hash[gene].append(peak)
     return hash
 
 def loadP300file(filename,whichTime):
@@ -76,15 +77,21 @@ geneToEnhancer=loadLoopFile(loopFile)
 enhancerToP300=loadP300file(p300file,enhancerTime)
 geneToFC=loadExpressionFile(expressionFile)
 
-print("X\tY")
+#print("X\tY")
 genes=geneToFC.keys()
 for gene in genes:
-    enhancerID=geneToEnhancer.get(gene,None)
-    if(enhancerID is None): continue
-    if(enhancerToP300.get(enhancerID,None) is None): continue
-    X=enhancerToP300[enhancerID]
+    enhancers=geneToEnhancer.get(gene,None)
+    if(enhancers is None or len(enhancers)<1): continue
+    P300=[]
+    for enhancerID in enhancers:
+        if(enhancerToP300.get(enhancerID,None) is None): continue
+        P300.append(enhancerToP300[enhancerID])
+    if(len(P300)<1): continue
+    #X=max(P300)
+    X=sum(P300)
     Y=geneToFC[gene]
     print(X,Y,sep="\t")
+    #print(len(enhancers),file=sys.stderr)
 
 
 

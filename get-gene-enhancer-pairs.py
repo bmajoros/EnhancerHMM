@@ -15,7 +15,8 @@ import ProgramName
 from Interval import Interval
 
 MAX_DIST_TO_ANCHOR=1
-MAX_LINEAR_DIST=10000 #35000
+MAX_LINEAR_DIST=10000
+#MAX_LINEAR_DIST=35000
 MISSING=1000000000
 SEEN=set()
 
@@ -30,6 +31,8 @@ def loadLoops(filename):
         toBegin=int(toBegin); toEnd=int(toEnd)
         interval1=makeLoopAnchor(fromChr,fromBegin,fromEnd,toChr,toBegin,toEnd)
         interval2=makeLoopAnchor(toChr,toBegin,toEnd,fromChr,fromBegin,fromEnd)
+        interval1.mate=interval2
+        interval2.mate=interval1
         addAnchor(interval1,byChr)
         addAnchor(interval2,byChr)
     IN.close()
@@ -63,8 +66,21 @@ def loadTssFile(filename,byChr):
         byChr[chr].append(interval)        
     IN.close()
 
+def deduplicateEnhancers(byChr):
+    for chr in byChr.keys():
+        array=byChr[chr]
+        array.sort(key=lambda x: x.begin)
+        L=len(array)
+        i=0
+        while(i+1<L):
+            if(array[i].overlaps(array[i+1])):
+                del array[i]
+                L-=1
+            else: i+=1
+
 def loadEnhancers(filename,byChr):
     IN=open(filename,"rt")
+    hash={}
     for line in IN:
         fields=line.rstrip().split()
         if(len(fields)!=4): continue
@@ -74,7 +90,13 @@ def loadEnhancers(filename,byChr):
         interval=Interval(begin,end)
         interval.type="enhancer"
         interval.id=id
-        byChr[chr].append(interval)        
+        if(hash.get(chr,None) is None): hash[chr]=[]
+        hash[chr].append(interval)
+    deduplicateEnhancers(hash)
+    for chr in hash.keys():
+        array=hash[chr]
+        for elem in array:
+            byChr[chr].append(elem)
     IN.close()
 
 def distanceToNearest(fromType,toType,byChr):
@@ -161,19 +183,16 @@ def getType(objects,type):
         if(elem.type==type): array.append(elem)
     return array
 
-def emitAnchorPairs(anchor):
-    global SEEN
-    genes=getType(anchor.objects,"gene")
-    enhancers=getType(anchor.objects,"enhancer")
-    #if(len(genes)>0 and len(enhancers)>0): print("XXX BOTH")
-    #if(len(genes)>0 and len(enhancers)==0): print("XXX GENES")
-    #if(len(genes)==0 and len(enhancers)>0): print("XXX ENHANCERS")
+def emitGenesEnhancers(objects1,objects2):
+    genes=getType(objects1,"gene")
+    enhancers=getType(objects2,"enhancer")
     for gene in genes:
         for enhancer in enhancers:
-            if(gene.id in SEEN): continue
-            SEEN.add(gene.id)
             print(gene.id,enhancer.id,sep="\t")
-            break
+
+def emitAnchorPairs(anchor):
+    emitGenesEnhancers(anchor.objects,anchor.mate.objects)
+    #emitGenesEnhancers(anchor.mate.objects,anchor.objects)
 
 def emitByProximity(byChr):
     global SEEN
@@ -193,6 +212,27 @@ def emitByProximity(byChr):
                 print(gene.id,nearest.id,sep="\t")
                 SEEN.add(gene.id)
 
+def countPairs(type1,type2,byChr):
+    pairs=set()
+    for chr in byChr.keys():
+        array=byChr[chr]
+        for anchor in array:
+            if(anchor.type!="anchor"): continue
+            getPairKeys(anchor.objects,anchor.mate.objects,type1,type2,pairs)
+            #getPairKeys(anchor.mate.objects,anchor.objects,type1,type2,pairs)
+    return len(pairs)
+
+def getPairKeys(objects1,objects2,type1,type2,pairs):
+    objects1=getType(objects1,type1)
+    objects2=getType(objects2,type2)
+    for a in objects1:
+        for b in objects2:
+            if(a==b): continue
+            if(type1==type2):
+                if(a.id>b.id): c=a; a=b; b=c
+            key=a.id+" "+b.id
+            pairs.add(key)
+                
 #=========================================================================
 # main()
 #=========================================================================
@@ -206,7 +246,12 @@ loadEnhancers(enhancerFile,byChr)
 sortArrays(byChr)
 assignToAnchors("enhancer",byChr)
 assignToAnchors("gene",byChr)
-emitPairs(byChr)
-emitByProximity(byChr)
+#emitPairs(byChr)
+#emitByProximity(byChr)
+
+#print("gene-gene:",countPairs("gene","gene",byChr))
+#print("enhancer-enhancer:",countPairs("enhancer","enhancer",byChr))
+#print("enhancer-gene:",countPairs("enhancer","gene",byChr))
+#print("gene-enhancer:",countPairs("gene","enhancer",byChr))
 
 
