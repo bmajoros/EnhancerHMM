@@ -17,8 +17,7 @@ rex=Rex()
 
 SINGLE_PEAK_ONLY=False
 MULTI_PEAK_ONLY=True
-MIN_PEAK_LEN=1
-#MIN_PEAK_LEN=250
+MIN_PEAK_LEN=450
 
 def loadLoopFile(filename):
     hash={} # maps genes to enhancers
@@ -52,24 +51,28 @@ def loadP300file(filename,whichTime):
                 if(state==3): peakLengths.append(end-begin)
             fields=features.split("|")
             if(len(fields)!=len(peakLengths)): raise Exception("unequal")
-            numPeaks=0
-            for L in peakLengths:
-                if(L>=MIN_PEAK_LEN): numPeaks+=1
+            #numPeaks=0
+            #for L in peakLengths:
+            #    if(L>=MIN_PEAK_LEN): numPeaks+=1
+            numPeaks=len(peakLengths)
             if(SINGLE_PEAK_ONLY and numPeaks>1): continue
             if(MULTI_PEAK_ONLY and numPeaks<2): continue
             array=[]
             for i in range(len(fields)):
                 if(peakLengths[i]<MIN_PEAK_LEN): continue
-                #if(CTCF[i]!='0'): continue ###
+                #if(GR[i]=='0' and AP1[i]=='0' and CEBP[i]=='0' and FOX[i]=='0' and KLF[i]=='0' and CTCF[i]=='0'): continue ###
+                #if(GR[i]=='0' or AP1[i]=='0'): continue
+                #if(GR[i]=='0'): continue ###
                 field=fields[i]
                 subfields=field.split(",")
                 (DNase_t0,DNase_t3,P300_t0,P300_t3)=subfields
                 #if(float(DNase_t3)-float(DNase_t0)<0.1): continue
+                #if(float(DNase_t3)<0.8 and float(DNase_t0)<0.8): continue ###
                 delta=float(P300_t3)-float(P300_t0)
                 array.append(delta)
             if(len(array)>0):
-                hash[enhancerID]=max(array)
-                #hash[enhancerID]=sum(array)
+                #hash[enhancerID]=max(array)
+                hash[enhancerID]=sum(array)
     return hash
 
 def loadExpressionFile(filename):

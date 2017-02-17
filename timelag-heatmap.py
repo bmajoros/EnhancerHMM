@@ -24,7 +24,7 @@ if(len(sys.argv)!=2):
 df=pd.read_csv(infile,sep="\t",header=None)
 
 # cm.bwr?
-plt.imshow(df, cmap=cm.Reds, interpolation='nearest')
+plt.imshow(df, cmap=cm.Reds, vmax=0.28, interpolation='nearest')
 plt.colorbar()  
 plt.savefig("timelag-heatmap.pdf")
 

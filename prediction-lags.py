@@ -21,6 +21,7 @@ for time in TIMEPOINTS: print("\t"+time,end="")
 print()
 N=len(TIMEPOINTS)
 for i in range(N):
+#for i in range(N-3,N):
     enhancerTime=TIMEPOINTS[i]
     print(enhancerTime+"\t",end="")
     for j in range(N):
