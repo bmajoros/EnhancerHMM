@@ -10,14 +10,17 @@ from builtins import (bytes, dict, int, list, object, range, str, ascii,
    chr, hex, input, next, oct, open, pow, round, super, filter, map, zip)
 # The above imports should allow this program to run in both Python 2 and
 # Python 3.  You might need to update your version of module "future".
+import os
 import sys
 import ProgramName
 from Rex import Rex
 rex=Rex()
 
-SINGLE_PEAK_ONLY=False
-MULTI_PEAK_ONLY=True
-MIN_PEAK_LEN=450
+SINGLE_PEAK_ONLY=True
+MULTI_PEAK_ONLY=False
+MIN_PEAK_LEN=1 #450
+SUBSET_ENHANCERS=set()
+SHOULD_SUBSET=False
 
 def loadLoopFile(filename):
     hash={} # maps genes to enhancers
@@ -43,6 +46,8 @@ def loadP300file(filename,whichTime):
                 raise Exception(fastb)
             enhancerID=rex[1]; time=rex[2]
             if(time!=whichTime): continue
+            if(SHOULD_SUBSET and enhancerID not in SUBSET_ENHANCERS):
+                continue
             peakLengths=[]
             fields=parse.split("|")
             for field in fields:
@@ -71,8 +76,8 @@ def loadP300file(filename,whichTime):
                 delta=float(P300_t3)-float(P300_t0)
                 array.append(delta)
             if(len(array)>0):
-                #hash[enhancerID]=max(array)
-                hash[enhancerID]=sum(array)
+                hash[enhancerID]=max(array)
+                #hash[enhancerID]=sum(array)
     return hash
 
 def loadExpressionFile(filename):
@@ -89,9 +94,15 @@ def loadExpressionFile(filename):
 #=========================================================================
 # main()
 #=========================================================================
-if(len(sys.argv)!=5):
-    exit(ProgramName.get()+" <genes-enhancers.txt> <genomewide-features.txt> <edgeR.txt> <enhancer-timepoint>\n")
-(loopFile,p300file,expressionFile,enhancerTime)=sys.argv[1:]
+if(len(sys.argv)!=6):
+    exit(ProgramName.get()+" <genes-enhancers.txt> <genomewide-features.txt> <edgeR.txt> <enhancer-timepoint> <subset-enhancers-or-NONE>\n")
+(loopFile,p300file,expressionFile,enhancerTime,subsetFile)=sys.argv[1:]
+
+if(os.path.exists(subsetFile)):
+    SHOULD_SUBSET=True
+    with open(subsetFile) as IN:
+        for line in IN:
+            SUBSET_ENHANCERS.add(line.rstrip())
 
 geneToEnhancer=loadLoopFile(loopFile)
 enhancerToP300=loadP300file(p300file,enhancerTime)
