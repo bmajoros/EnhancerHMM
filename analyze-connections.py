@@ -358,7 +358,7 @@ def dumpLinks(byChr):
             fromType=getDumpType(enhancer)
             mates=enhancer.linkedTo
             degree=0
-            connectedToMulti=False
+            #connectedToMulti=False
             for mate in mates:
                 toType=getDumpType(mate)
                 if(toType=="bad"): continue
@@ -367,10 +367,10 @@ def dumpLinks(byChr):
                     counts[fromType]={}
                 counts[fromType][toType]=counts[fromType].get(toType,0)+1
                 degree+=1
-                if(toType=="multipeak"): connectedToMulti=True
-            if(fromType=="singleton"):
-                FILE=CONNECTED if connectedToMulti else NOT_CONNECTED
-                print(enhancer.id,file=FILE)
+                #if(toType=="multipeak"): connectedToMulti=True
+            #if(fromType=="singleton"):
+                #FILE=CONNECTED if connectedToMulti else NOT_CONNECTED
+                #print(enhancer.id,file=FILE)
             if(degreeByType.get(fromType,None) is None):
                 degreeByType[fromType]=[]
             degreeByType[fromType].append(degree)
@@ -380,6 +380,7 @@ def dumpLinks(byChr):
             numGenes+=1
             mates=gene.linkedTo
             degree=0
+            connectedToMulti=False
             for mate in mates:
                 toType=getDumpType(mate)
                 if(toType=="bad"): continue
@@ -387,6 +388,9 @@ def dumpLinks(byChr):
                     counts[fromType]={}
                 counts[fromType][toType]=counts[fromType].get(toType,0)+1
                 degree+=1
+                if(toType=="multipeak"): connectedToMulti=True
+            FILE=CONNECTED if connectedToMulti else NOT_CONNECTED
+            print(gene.id,file=FILE)
             if(degreeByType.get(fromType,None) is None):
                 degreeByType[fromType]=[]
             degreeByType[fromType].append(degree)

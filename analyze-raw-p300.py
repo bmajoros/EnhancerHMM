@@ -24,7 +24,7 @@ def process(peakID,parse,scores):
     p300file=P300_DIR+"/"+peakID+".fastb"
     peaks=getPeaks(parse)
     fastb=Fastb(p300file)
-    getP300scores(peaks,fastb)
+    getP300scores(peaks,fastb,peakID)
     numPeaks=len(peaks)
     for peak in peaks:
         print(peak.score,numPeaks,peak.length(),sep="\t")
@@ -50,11 +50,19 @@ def getPeaks(parse):
         peaks.append(Interval(begin,end))
     return peaks
 
-def getP300scores(peaks,fastb):
+def getP300scores(peaks,fastb,peakID):
+    ###
+    if(not rex.find("(\S+)\.t\d+",peakID)): exit(peakID)
+    id=rex[1]
+    otherFastb=Fastb(P300_DIR+"/"+id+".t00.fastb")
+    otherTrack=otherFastb.getTrackByName("EP300")
+    ###
     track=fastb.getTrackByName("EP300")
     for peak in peaks:
         array=track.data[peak.begin:peak.end]
-        peak.score=max(array)
+        otherArray=otherTrack.data[peak.begin:peak.end]
+        #peak.score=max(array)
+        peak.score=max(array)-max(otherArray)
 
 #=========================================================================
 # main()

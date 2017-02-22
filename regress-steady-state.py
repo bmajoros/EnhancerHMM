@@ -67,14 +67,15 @@ def loadP300file(filename,whichTime):
                 if(peakLengths[i]<MIN_PEAK_LEN): continue
                 #if(GR[i]=='0' and AP1[i]=='0' and CEBP[i]=='0' and FOX[i]=='0' and KLF[i]=='0' and CTCF[i]=='0'): continue ###
                 #if(GR[i]=='0' or AP1[i]=='0'): continue
+                #if(AP1[i]=='0'): continue
                 #if(GR[i]=='0'): continue ###
                 field=fields[i]
                 subfields=field.split(",")
                 (DNase_t0,DNase_t3,P300_t0,P300_t3)=subfields
                 #if(float(DNase_t3)-float(DNase_t0)<0.1): continue
                 #if(float(DNase_t3)<0.8 and float(DNase_t0)<0.8): continue ###
-                delta=float(P300_t3)-float(P300_t0)
-                array.append(delta)
+                #delta=float(P300_t3)-float(P300_t0)
+                array.append(float(P300_t0))
             if(len(array)>0):
                 hash[enhancerID]=max(array)
                 #hash[enhancerID]=sum(array)
@@ -84,21 +85,23 @@ def loadExpressionFile(filename):
     # gene        logFC   logCPM  LR      PValue  FDR
     hash={}
     with open(filename) as IN:
+        IN.readline() # header
         for line in IN:
             fields=line.rstrip().split()
-            if(len(fields)!=6): continue
-            (gene,logFC,logCPM,LR,Pvalue,FDR)=fields
-            if(SHOULD_SUBSET and gene not in SUBSET_ENHANCERS):
-                continue
-            hash[gene]=logFC
-            print(logFC)
+            if(len(fields)<5): continue
+            #(gene,expression)=fields
+            gene=fields[0]
+            expression=(float(fields[1])+float(fields[2])+float(fields[3])+float(fields[4]))/4.0
+            #if(SHOULD_SUBSET and gene not in SUBSET_ENHANCERS):
+            #    continue
+            hash[gene]=float(expression)
     return hash
 
 #=========================================================================
 # main()
 #=========================================================================
 if(len(sys.argv)!=6):
-    exit(ProgramName.get()+" <genes-enhancers.txt> <genomewide-features.txt> <edgeR.txt> <enhancer-timepoint> <subset-enhancers-or-NONE>\n")
+    exit(ProgramName.get()+" <genes-enhancers.txt> <genomewide-features.txt> <expression-t00.txt> <enhancer-timepoint> <subset-enhancers-or-NONE>\n")
 (loopFile,p300file,expressionFile,enhancerTime,subsetFile)=sys.argv[1:]
 
 if(os.path.exists(subsetFile)):
@@ -110,8 +113,6 @@ if(os.path.exists(subsetFile)):
 geneToEnhancer=loadLoopFile(loopFile)
 enhancerToP300=loadP300file(p300file,enhancerTime)
 geneToFC=loadExpressionFile(expressionFile)
-
-exit()
 
 #print("X\tY")
 genes=geneToFC.keys()
