@@ -27,10 +27,49 @@ MAX_LINEAR_DIST=10000
 MISSING=1000000000
 SEEN=set()
 
+def getP300values(filename,whichTime):
+    global P300hash
+    with open(filename) as IN:
+        for line in IN:
+            fields=line.rstrip().split()
+            if(len(fields)!=11): continue
+            (fastb,LLR,P,parse,features,GR,AP1,CEBP,FOX,KLF,CTCF)=fields
+            if(not rex.find("(\S+)\.(t\d+)\.fastb",fastb)):
+                raise Exception(fastb)
+            enhancerID=rex[1]
+            time=rex[2]
+            if(time!=whichTime): continue
+            peakLengths=[]
+            fields=parse.split("|")
+            for field in fields:
+                if(not rex.find("(\d+):(\d+)-(\d+)",field)): exit(field)
+                state=int(rex[1]); begin=int(rex[2]); end=int(rex[3])
+                if(state==3): peakLengths.append(end-begin)
+            #numPeaks=len(fields)
+            numPeaks=0
+            for L in peakLengths:
+                if(L>=MIN_PEAK_LEN): numPeaks+=1
+
+            fields=features.split("|")
+            array=[]
+            for i in range(len(fields)):
+                if(peakLengths[i]<MIN_PEAK_LEN): continue
+                field=fields[i]
+                subfields=field.split(",")
+                (DNase_t0,DNase_t3,P300_t0,P300_t3)=subfields
+                delta=float(P300_t3)-float(P300_t0)
+                if(P300_TYPE=="change"): array.append(delta)
+                elif(P300_TYPE=="first-time"): array.append(float(P300_t0))
+                elif(P300_TYPE=="second-time"): array.append(float(P300_t3))
+                else: raise Exception(P300_TYPE)
+            if(len(array)>0):
+                P300hash[enhancerID]=max(array)
+                #P300hash[enhancerID]=sum(array)
+
 def getNumPeaks(filename,whichTime):
     global P300hash
     # iter0_peak14413.t3.fastb        2234.2906200000034      1.0     1:0-1|2:1-2|3:2-1243|4:1243-1256|3:1256-1998|4:1998-1999|5:1999-2000    1.07942122577,1.12211048111,1.00477844983,1.16141454506|0.952633976593,1.02660980228,0.892990209161,0.961271510352      10      10      11      10      10      00
-    hash={} # maps enhancerID to P300 value
+    hash={} # maps enhancerID to number of peaks
     with open(filename) as IN:
         for line in IN:
             fields=line.rstrip().split()
@@ -48,10 +87,10 @@ def getNumPeaks(filename,whichTime):
                 if(not rex.find("(\d+):(\d+)-(\d+)",field)): exit(field)
                 state=int(rex[1]); begin=int(rex[2]); end=int(rex[3])
                 if(state==3): peakLengths.append(end-begin)
-            #numPeaks=len(fields)
-            numPeaks=0
-            for L in peakLengths:
-                if(L>=MIN_PEAK_LEN): numPeaks+=1
+            numPeaks=len(peakLengths)
+            #numPeaks=0
+            #for L in peakLengths:
+            #    if(L>=MIN_PEAK_LEN): numPeaks+=1
             hash[enhancerID]=numPeaks
 
             fields=features.split("|")
@@ -66,8 +105,8 @@ def getNumPeaks(filename,whichTime):
                 elif(P300_TYPE=="first-time"): array.append(float(P300_t0))
                 elif(P300_TYPE=="second-time"): array.append(float(P300_t3))
                 else: raise Exception(P300_TYPE)
-            if(len(array)>0):
-                P300hash[enhancerID]=max(array)
+            #if(len(array)>0):
+                #P300hash[enhancerID]=max(array)
                 #P300hash[enhancerID]=sum(array)
     return hash
 
@@ -317,6 +356,8 @@ def dumpPairedP300(byChr):
     MULTIMULTI=open("multimulti.txt","wt")
     MULTISINGLE=open("multisingle.txt","wt")
     SINGLESINGLE=open("singlesingle.txt","wt")
+    SINGLEALONE=open("singlealone.txt","wt")
+    REGRESSION=open("topology-regression.txt","at")
     for chr in byChr.keys():
         for enhancer in byChr[chr]:
             if(enhancer.type!="enhancer" or enhancer.numPeaks<1): continue
@@ -324,6 +365,14 @@ def dumpPairedP300(byChr):
             p300_1=P300hash[enhancer.id]
             fromType=getDumpType(enhancer)
             mates=enhancer.linkedTo
+            mateTypes=set()
+            numSingleMates=0; numMultiMates=0
+            for mate in mates:
+                if(mate.type!="enhancer" or mate.numPeaks<1): continue
+                toType=getDumpType(mate)
+                mateTypes.add(toType)
+                if(toType=="singleton"): numSingleMates+=1
+                elif(toType=="multipeak"): numMultiMates+=1
             for mate in mates:
                 if(mate.type!="enhancer" or mate.numPeaks<1): continue
                 toType=getDumpType(mate)
@@ -337,7 +386,13 @@ def dumpPairedP300(byChr):
                     print(p300_1,p300_2,sep="\t",file=MULTISINGLE)
                 if(fromType=="singleton" and toType=="singleton"):
                     print(p300_1,p300_2,sep="\t",file=SINGLESINGLE)
+            if(fromType=="singleton"):
+                print(p300_1,numSingleMates,numMultiMates,sep="\t",
+                      file=REGRESSION)
+            if("singleton" not in mateTypes and "multipeak" not in mateTypes):
+                print(p300_1,file=SINGLEALONE)
     MULTIMULTI.close(); MULTISINGLE.close(); SINGLESINGLE.close()
+    SINGLEALONE.close()
 
 def dumpLinks(byChr):
     numSingletons=0
@@ -450,13 +505,15 @@ def getClusters(object,seen,counts):
 #=========================================================================
 # main()
 #=========================================================================
-if(len(sys.argv)!=6):
-    exit(ProgramName.get()+" <genomewide-features.txt> <enhancers.bed> <tss.txt> <loops.txt> <t#>\n")
-(featuresFile,enhancerFile,tssFile,loopFile,timepoint)=sys.argv[1:]
+if(len(sys.argv)!=7):
+    exit(ProgramName.get()+" <genomewide-features-standardized.txt> <genomewide-features-raw.bed> <enhancers.bed> <tss.txt> <loops.txt> <t#>\n")
+(featuresFileStandard,featuresFileRaw,enhancerFile,tssFile,loopFile,
+ timepoint)=sys.argv[1:]
 
 #numPeaksHash=getNumPeaks(featuresFile,"t05")
 
-numPeaksHash=getNumPeaks(featuresFile,timepoint) ###
+numPeaksHash=getNumPeaks(featuresFileStandard,timepoint) ###
+getP300values(featuresFileRaw,timepoint)
 
 byChr=loadLoops(loopFile)
 loadTssFile(tssFile,byChr)
