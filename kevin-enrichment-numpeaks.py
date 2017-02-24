@@ -16,7 +16,7 @@ from Rex import Rex
 rex=Rex()
 
 TIMEPOINT="t4"
-MIN_PEAK_LEN=1
+MIN_PEAK_LEN=250
 DELTA="/home/bmajoros/GGR/delta"
 KEVIN=DELTA+"/kevin-intersection.bed"
 ENHANCER_COORDS=DELTA+"/p300-hg38.bed"
@@ -45,11 +45,13 @@ def loadPeaks(filename,enhancerCoords,whichTime):
             if(chunkCoords is None): continue
             subfields=parse.split("|")
             peaks=[]
+            numPeaks=0
             for subfield in subfields:
                 if(not rex.find("(\d+):(\d+)-(\d+)",subfield)):
                     raise Exception(subfield)
                 state=int(rex[1]); 
                 if(state!=3): continue
+                numPeaks+=1
                 begin=int(rex[2]); end=int(rex[3])
                 peakLen=end-begin
                 if(peakLen<MIN_PEAK_LEN): continue
@@ -57,7 +59,7 @@ def loadPeaks(filename,enhancerCoords,whichTime):
                 peak.chr=chunkCoords.chr
                 peak.motifs=[]
                 peaks.append(peak)
-            numPeaks=len(peaks)
+            #numPeaks=len(peaks)
             if(numPeaks<1): continue
             enhancerType="singleton" if numPeaks==1 else "multipeak"
             for peak in peaks: peak.type=enhancerType
@@ -71,9 +73,9 @@ def loadTFs(filename,hash):
     for tf in list:
         array=hash.get(tf.chr,None)
         if(array is None): continue
-        tf.type="TF"
         rec=tf.interval
         rec.name=tf.name
+        rec.type="TF"
         array.append(rec)
 
 def sortChroms(hash):
@@ -85,7 +87,7 @@ def sortChroms(hash):
 def putTFsInPeaks(peaksByChr):
     chroms=peaksByChr.keys()
     for chr in chroms:
-        array=hash[chr]
+        array=peaksByChr[chr]
         L=len(array)
         for i in range(L):
             peak=array[i]
@@ -96,7 +98,7 @@ def putTFsInPeaks(peaksByChr):
         for elem in array:
             if(elem.type=="singleton" or elem.type=="multipeak"):
                 newArray.append(elem)
-        hash[chr]=newArray
+        peaksByChr[chr]=newArray
 
 def scanLeft(index,array,peak):
     for i in range(index-1,-1,-1):
@@ -112,6 +114,16 @@ def scanRight(index,array,L,peak):
         if(tf.overlaps(peak)): peak.motifs.append(tf)
         elif(tf.distance(peak)>30): break
 
+def dump(peaksByChr):
+    chroms=peaksByChr.keys()
+    for chr in chroms:
+        array=peaksByChr[chr]
+        for peak in array:
+            print(peak.type,end="")
+            for tf in peak.motifs:
+                print("\t"+tf.name,end="")
+            print()
+
 #=========================================================================
 # main()
 #=========================================================================
@@ -121,7 +133,7 @@ peaksByChr=loadPeaks(PREDICTIONS,enhancerIdToCoords,TIMEPOINT)
 loadTFs(KEVIN,peaksByChr)
 sortChroms(peaksByChr)
 putTFsInPeaks(peaksByChr)
-
+dump(peaksByChr)
 
 
 
