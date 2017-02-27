@@ -13,6 +13,7 @@ from builtins import (bytes, dict, int, list, object, range, str, ascii,
 import sys
 import ProgramName
 from Interval import Interval
+from EssexNode import EssexNode
 from Rex import Rex
 rex=Rex()
 
@@ -67,13 +68,14 @@ def loadTssFile(filename,byChr,expressionHash):
         if(chr=="chrM"): continue
         pos=int(pos)
         interval=Interval(pos,pos+1)
+        interval.chr=chr
         interval.type="gene"
         interval.id=id
         interval.mates=[]
         if(expressionHash.get(id,None) is None): continue
         (logFC,logCPM,LR,Pvalue,FDR)=expressionHash[id]
-        interval.logFC=logFC
-        interval.FDR=FDR
+        interval.logFC=round(float(logFC),3)
+        interval.FDR=round(float(FDR),3)
         byChr[chr].append(interval)
     IN.close()
 
@@ -87,12 +89,14 @@ def loadEnhancers(filename,byChr,byID):
         if(chr=="chrM" or len(chr)>5): continue
         begin=int(begin); end=int(end)
         interval=Interval(begin,end)
+        interval.chr=chr
         interval.begin=interval.intCenter()-int(CHUNK_WIDTH/2)
         interval.end=interval.intCenter()+int(CHUNK_WIDTH/2)
         interval.type="enhancer"
         interval.id=id
-        interval.numPeaks=-1
+        interval.numPeaks=0
         interval.mates=[]
+        interval.peaks=None
         if(hash.get(chr,None) is None): hash[chr]=[]
         hash[chr].append(interval)
     deduplicateEnhancers(hash)
@@ -142,11 +146,13 @@ def loadStandardized(filename,whichTime,byID):
                 subfields=field.split(",")
                 (DNase_t0,DNase_t3,P300_t0,P300_t3)=subfields
                 peak=peaks[i]
-                peak.std_dnase_t0=DNase_t0
-                peak.std_dnase_t3=DNase_t3
-                peak.std_p300_t0=P300_t0
-                peak.std_p300_t3=P300_t3
+                peak.std_dnase_t0=round(float(DNase_t0),3)
+                peak.std_dnase_t3=round(float(DNase_t3),3)
+                peak.std_p300_t0=round(float(P300_t0),3)
+                peak.std_p300_t3=round(float(P300_t3),3)
+                peak.motifs=set()
             enhancer.peaks=peaks
+            enhancer.numPeaks=len(peaks)
 
 def loadRaw(filename,whichTime,byID):
     with open(filename) as IN:
@@ -168,10 +174,10 @@ def loadRaw(filename,whichTime,byID):
                 subfields=field.split(",")
                 (DNase_t0,DNase_t3,P300_t0,P300_t3)=subfields
                 peak=peaks[i]
-                peak.raw_dnase_t0=DNase_t0
-                peak.raw_dnase_t3=DNase_t3
-                peak.raw_p300_t0=P300_t0
-                peak.raw_p300_t3=P300_t3
+                peak.raw_dnase_t0=round(float(DNase_t0),3)
+                peak.raw_dnase_t3=round(float(DNase_t3),3)
+                peak.raw_p300_t0=round(float(P300_t0),3)
+                peak.raw_p300_t3=round(float(P300_t3),3)
 
 def sortArrays(byChr):
     chroms=byChr.keys()
@@ -235,7 +241,6 @@ def loadMotifs(filename,byID):
         enhancer=byID.get(enhancerID,None)
         if(enhancer is None): continue
         peak=enhancer.peaks[peakNum]
-        peak.motifs=set()
         for motif in motifs: peak.motifs.add(motif)
     IN.close()
 
@@ -248,10 +253,61 @@ def dumpGraph(byChr):
             elif(elem.type=="enhancer"): dumpEnhancer(elem)
 
 def dumpGene(gene):
-    pass
+    essex=makeGeneEssex(gene)
+    essex.print(sys.stdout)
+    print()
 
 def dumpEnhancer(enhancer):
-    pass
+    essex=makeEnhancerEssex(enhancer)
+    if(essex is None): return
+    essex.print(sys.stdout)
+    print()
+
+def makeGeneEssex(gene):
+    essex=EssexNode(["gene"])
+    essex.setAttribute("id",gene.id)
+    essex.setAttribute("logFC",gene.logFC)
+    essex.setAttribute("FDR",gene.FDR)
+    essex.setAttribute("chr",gene.chr)
+    essex.setAttribute("TSS",gene.begin)
+    mates=EssexNode(["mates"])
+    essex.addElem(mates)
+    for mate in gene.mates:
+        mates.addElem(mate.id)
+    return essex
+
+def makeEnhancerEssex(enhancer):
+    essex=EssexNode(["enhancer"])
+    essex.setAttribute("id",enhancer.id)
+    essex.setAttribute("chr",enhancer.chr)
+    essex.setAttribute("begin",enhancer.begin)
+    essex.setAttribute("end",enhancer.end)
+    essex.setAttribute("numPeaks",enhancer.numPeaks)
+    peaks=EssexNode(["peaks"])
+    essex.addElem(peaks)
+    if(enhancer.peaks is None): return None
+    for peak in enhancer.peaks:
+        node=EssexNode(["peak"])
+        peaks.addElem(node)
+        node.setAttribute("begin",peak.begin)
+        node.setAttribute("end",peak.end)
+        node.setAttribute("width",peak.end-peak.begin)
+        node.setAttribute("std_dnase_t0",peak.std_dnase_t0)
+        node.setAttribute("std_dnase_t3",peak.std_dnase_t3)
+        node.setAttribute("raw_dnase_t0",peak.raw_dnase_t0)
+        node.setAttribute("raw_dnase_t3",peak.raw_dnase_t3)
+        node.setAttribute("std_P300_t0",peak.std_p300_t0)
+        node.setAttribute("std_P300_t3",peak.std_p300_t3)
+        node.setAttribute("raw_P300_t0",peak.raw_p300_t0)
+        node.setAttribute("raw_P300_t3",peak.raw_p300_t3)
+        motifsNode=EssexNode(["motifs"])
+        node.addElem(motifsNode)
+        for motif in peak.motifs: motifsNode.addElem(motif)
+    mates=EssexNode(["mates"])
+    essex.addElem(mates)
+    for mate in enhancer.mates:
+        mates.addElem(mate.id)
+    return essex
 
 #=========================================================================
 # main()
