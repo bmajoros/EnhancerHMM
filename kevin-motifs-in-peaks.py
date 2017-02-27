@@ -11,13 +11,12 @@ from builtins import (bytes, dict, int, list, object, range, str, ascii,
 # The above imports should allow this program to run in both Python 2 and
 # Python 3.  You might need to update your version of module "future".
 import sys
-from ProgramName import ProgramName
+import ProgramName
 from BedReader import BedReader
 from Interval import Interval
 from Rex import Rex
 rex=Rex()
 
-#TIMEPOINT="t4"
 MIN_PEAK_LEN=1 # 250
 STANDARD_PEAK_WIDTH=200 # 200
 DELTA="/home/bmajoros/GGR/delta"
@@ -58,8 +57,9 @@ def loadPeaks(filename,enhancerCoords,whichTime):
                 numPeaks+=1
                 begin=int(rex[2]); end=int(rex[3])
                 peakLen=end-begin
-                if(peakLen<MIN_PEAK_LEN): continue
+                #if(peakLen<MIN_PEAK_LEN): continue
                 peak=Interval(origin+begin,origin+end)
+                peak.id=enhancerID+"_"+str(numPeaks-1)
                 if(STANDARD_PEAK_WIDTH>0):
                     peak.begin=peak.intCenter()-STANDARD_PEAK_WIDTH/2
                     peak.end=peak.intCenter()+STANDARD_PEAK_WIDTH/2
@@ -126,7 +126,7 @@ def dump(peaksByChr):
     for chr in chroms:
         array=peaksByChr[chr]
         for peak in array:
-            print(peak.type,end="")
+            print(peak.id,end="")
             for tf in peak.motifs:
                 print("\t"+tf.name,end="")
             print()
@@ -136,7 +136,7 @@ def dump(peaksByChr):
 #=========================================================================
 
 if(len(sys.argv)!=2):
-    exit(ProgramName.get()+" <timepoint>"
+    exit(ProgramName.get()+" <timepoint>")
 (TIMEPOINT,)=sys.argv[1:]
 
 enhancerIdToCoords=loadEnhancerCoords(ENHANCER_COORDS)

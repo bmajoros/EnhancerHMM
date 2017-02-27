@@ -20,7 +20,9 @@ def loadData(filename):
     for line in IN:
         fields=line.rstrip().split()
         rec=[fields[0],set()]
-        for TF in fields[1:]: rec[1].add(TF)
+        for TF in fields[1:]:
+            #TF="ANY" ###
+            rec[1].add(TF)
         lines.append(rec)
     IN.close()
     return lines
@@ -44,12 +46,16 @@ def testFactor(TF,data,alpha):
         table[peakType][present]+=1
     fisher=Fisher2x2(table[0][0],table[0][1],table[1][0],table[1][1])
     (exp00,exp01,exp10,exp11)=fisher.getExpectedCounts()
-    if(table[1][1]<=exp11): return
+    #if(table[1][1]<=exp11): return
     P=fisher.getPvalue()
-    if(P>=alpha): return
-    print(P,"\t"+TF+"\t"+"observed=[",
-          table[0][0],table[0][1],table[1][0],table[1][1],
-          "] expected= [",exp00,exp01,exp10,exp11,"]")
+    #if(P>=alpha): return
+    #print(P,"\t"+TF+"\t"+"observed=[",
+    #      table[0][0],table[0][1],table[1][0],table[1][1],
+    #      "] expected= [",exp00,exp01,exp10,exp11,"]")
+    sign="<=" if table[1][1]<=exp11 else ">"
+    sign2="<=" if table[0][1]<=exp01 else ">"
+    print(str(P)+"\t"+TF+"\t"+str(table[0][1])+sign2+str(exp01)+"\t"+
+          str(table[1][1])+sign+str(exp11))
 
 #=========================================================================
 # main()
