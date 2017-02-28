@@ -17,16 +17,33 @@ from Fisher2x2 import Fisher2x2
 from Rex import Rex
 rex=Rex()
 
+def regressSubset(graph):
+    genes=graph.getGenes()
+    for gene in genes:
+        mates=gene.enhancersMates
+        if(len(mates)<1): continue
+        for enhancer in mates:
+            if(enhancer.numPeaks<2): continue
+            
+
+
 def motifsInNonGRpeaks(graph):
     enhancers=graph.getEnhancers()
     TFs=graph.getAllTFs()
     for tf in TFs:
-        if(tf=="GR"): continue
-        table=[[0,0],[0,0]] # [motif present][dex responsive]
+        table=[[0,0],[0,0]] # [motif present][GR present)
         for enhancer in enhancers:
-            if(enhancer.numPeaks<2): continue
+            #if(enhancer.numPeaks<2): continue
+            if(enhancer.numPeaks>1): continue
             for peak in enhancer.peaks:
                 x=1 if "GR" in peak.motifs else 0
+                #found=0
+                #for motif in peak.motifs:
+                #    if("JUN" in motif or "jun" in motif or
+                #       "FOS" in motif or "fos" in motif): 
+                #        found=True
+                #        break
+                #x=1 if found else 0
                 y=1 if tf in peak.motifs else 0
                 table[x][y]+=1
         fisher=Fisher2x2(table[0][0],table[0][1],table[1][0],table[1][1])

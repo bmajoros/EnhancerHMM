@@ -53,8 +53,8 @@ class EnhancerGraph:
                               self.byEnhancerID)
         self.loadRaw(featuresFileRaw,enhancerTimepoint,self.byEnhancerID)
         self.loadMotifs(motifFile,self.byEnhancerID)
-        self.buildGraph(self.byChr)
         self.getGenesAndEnhancers()
+        self.buildGraph(self.byChr)
         #dumpGraph(byChr)
 
     def getSingletons(self):
@@ -301,6 +301,21 @@ class EnhancerGraph:
         self.assignToAnchors("enhancer",byChr)
         self.assignToAnchors("gene",byChr)
         self.pairViaAnchors(byChr)
+        self.classifyMateTypes(byChr)
+
+    def classifyMateTypes(self,byChr):
+        isEnhancer=set(); isGene=set()
+        for enhancer in self.enhancers: isEnhancer.add(enhancer.id)
+        for gene in self.genes: isGene.add(gene.id)
+        for chr in byChr.keys():
+            array=byChr[chr]
+            for elem in array:
+                if(elem.type=="anchor"): continue
+                elem.geneMates=[]
+                elem.enhancerMates=[]
+                for mate in elem.mates:
+                    if(mate.id in isEnhancer): elem.enhancerMates.append(mate)
+                    elif(mate.id in isGene): elem.geneMates.append(mate)
     
     def pairViaAnchors(self,byChr):
         for chr in byChr.keys():
