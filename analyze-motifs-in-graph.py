@@ -14,6 +14,31 @@ import sys
 import ProgramName
 from EnhancerGraph import EnhancerGraph
 from Fisher2x2 import Fisher2x2
+from Rex import Rex
+rex=Rex()
+
+def motifsInNonGRpeaks(graph):
+    enhancers=graph.getEnhancers()
+    TFs=graph.getAllTFs()
+    for tf in TFs:
+        if(tf=="GR"): continue
+        table=[[0,0],[0,0]] # [motif present][dex responsive]
+        for enhancer in enhancers:
+            if(enhancer.numPeaks<2): continue
+            for peak in enhancer.peaks:
+                x=1 if "GR" in peak.motifs else 0
+                y=1 if tf in peak.motifs else 0
+                table[x][y]+=1
+        fisher=Fisher2x2(table[0][0],table[0][1],table[1][0],table[1][1])
+        P=fisher.getPvalue()
+        (exp00,exp01,exp10,exp11)=fisher.getExpectedCounts()
+        if(P>=0.05): continue
+        #if(table[0][1]<=exp01):continue
+        msg="with GR" if table[1][1]>exp11 else "non-GR"
+        print(P,tf,"observed=["+str(table[0][0])+" "+str(table[0][1])+" "+
+              str(table[1][0])+" "+str(table[1][1])+"] expected=["+str(exp00)+
+              " "+str(exp01)+" "+str(exp10)+" "+str(exp11)+"]",msg,
+              sep="\t",flush=True)
 
 def multiResponsiveMotifs(graph):
     enhancers=graph.getEnhancers()
@@ -29,12 +54,78 @@ def multiResponsiveMotifs(graph):
         fisher=Fisher2x2(table[0][0],table[0][1],table[1][0],table[1][1])
         P=fisher.getPvalue()
         (exp00,exp01,exp10,exp11)=fisher.getExpectedCounts()
-        if(P>=0.05): continue
+        #if(P>=0.05): continue
+        #if(table[1][0]<=exp10):continue
+        #P=table[1][0]-exp10
+        P=table[1][0]
         msg="DEX responsive" if table[1][1]>exp11 else "non-reponsive"
         print(P,tf,"observed=["+str(table[0][0])+" "+str(table[0][1])+" "+
               str(table[1][0])+" "+str(table[1][1])+"] expected=["+str(exp00)+
               " "+str(exp01)+" "+str(exp10)+" "+str(exp11)+"]",msg,
               sep="\t",flush=True)
+
+def GR_vs_AP1(graph):
+    GR_AP1(graph.getSingletons(),"singletons")
+    GR_AP1(graph.getMultipeakEnhancers(),"multipeaks")
+
+def GR_AP1(enhancers,label):
+    gr=round(getProportionWithMotif(enhancers,"GR"),3)
+    ap1=round(getProportionWithAP1(enhancers),3)
+    both=round(getProportionWithGR_AP1(enhancers),3)
+    print(label,"GR="+str(gr),"AP-1="+str(ap1),"both="+str(both),sep="\t")
+
+def getProportionWithMotif(enhancers,motif):
+    total=0
+    hits=0
+    for enhancer in enhancers:
+        total+=1
+        found=False
+        for peak in enhancer.peaks:
+            #total+=1
+            #found=False
+            if(motif in peak.motifs):
+                found=True
+            #if(found): hits+=1
+        if(found): hits+=1
+    proportion=float(hits)/float(total)
+    return proportion
+
+def getProportionWithAP1(enhancers):
+    total=0
+    hits=0
+    for enhancer in enhancers:
+        total+=1
+        found=False
+        for peak in enhancer.peaks:
+            #total+=1
+            #found=False
+            for motif in peak.motifs:
+                if(rex.find("JUN",motif) or rex.find("jun",motif) or \
+                       rex.find("FOS",motif) or rex.find("fos",motif)):
+                    found=True
+            #if(found): hits+=1
+        if(found): hits+=1
+    proportion=float(hits)/float(total)
+    return proportion
+
+def getProportionWithGR_AP1(enhancers):
+    total=0
+    hits=0
+    for enhancer in enhancers:
+        total+=1
+        foundGR=False; foundAP1=False
+        for peak in enhancer.peaks:
+            #total+=1
+            #foundGR=False; foundAP1=False
+            if("GR" in peak.motifs): foundGR=True
+            for motif in peak.motifs:
+                if(rex.find("JUN",motif) or rex.find("jun",motif) or
+                   rex.find("FOS",motif) or rex.find("fos",motif)):
+                    foundAP1=True
+            #if(foundGR and foundAP1): hits+=1
+        if(foundGR and foundAP1): hits+=1
+    proportion=float(hits)/float(total)
+    return proportion
 
 #=========================================================================
 # main()
@@ -44,7 +135,7 @@ if(len(sys.argv)!=3):
 (enhancerTimepoint,geneTimepoint)=sys.argv[1:]
 
 graph=EnhancerGraph(enhancerTimepoint,geneTimepoint)
-multiResponsiveMotifs(graph)
-
-
+#multiResponsiveMotifs(graph)
+#GR_vs_AP1(graph)
+motifsInNonGRpeaks(graph)
 

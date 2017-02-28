@@ -21,6 +21,8 @@ from Rex import Rex
 #   graph=EnhancerGraph(enhancerTimepoint,geneTimepoint)
 #   genes=graph.getGenes()
 #   enhancers=graph.getEnhancers()
+#   singletons=graph.getSingletons()
+#   multipeakEnhancers=graph.getMultipeakEnhancers()
 #   byChr=graph.getByChr() # hash : chromosome => array of genes, enhancers,
 #                                                 and loop anchors
 #   hash=graph.getEnhancerHash() # hash : enhancerID => array of enhancers
@@ -54,6 +56,18 @@ class EnhancerGraph:
         self.buildGraph(self.byChr)
         self.getGenesAndEnhancers()
         #dumpGraph(byChr)
+
+    def getSingletons(self):
+        array=[]
+        for enhancer in self.enhancers:
+            if(enhancer.numPeaks==1): array.append(enhancer)
+        return array
+
+    def getMultipeakEnhancers(self):
+        array=[]
+        for enhancer in self.enhancers:
+            if(enhancer.numPeaks>1): array.append(enhancer)
+        return array
 
     def getAllTFs(self):
         all=set()
@@ -312,7 +326,10 @@ class EnhancerGraph:
             enhancer=byID.get(enhancerID,None)
             if(enhancer is None): continue
             peak=enhancer.peaks[peakNum]
-            for motif in motifs: peak.motifs.add(motif)
+            for motif in motifs:
+                m=motif
+                if(m=="NR3C1"): m="GR"
+                peak.motifs.add(m)
         IN.close()
     
     def dumpGraph(self,byChr):
