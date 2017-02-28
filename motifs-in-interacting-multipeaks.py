@@ -80,6 +80,7 @@ def getAllTFs(enhancers):
             for motif in motifNode.elements:
                 TFs.add(motif)
                 enhancer.motifs.add(motif)
+                #enhancer.motifs.add("ANY_MOTIF")
     return TFs
 
 def testTF(tf,allMultis):
