@@ -20,12 +20,44 @@ rex=Rex()
 def regressSubset(graph):
     genes=graph.getGenes()
     for gene in genes:
-        mates=gene.enhancersMates
+        mates=gene.enhancerMates
         if(len(mates)<1): continue
         for enhancer in mates:
-            if(enhancer.numPeaks<2): continue
-            
+            #if(enhancer.numPeaks<2): continue
+            if(enhancer.numPeaks>1): continue
+            if(enhancerHasAP1(enhancer)): continue
+            #if(not enhancerHasAP1(enhancer)): continue
+            p300=getP300(enhancer)
+            print(gene.logFC,p300,sep="\t")
 
+def regressAll(graph):
+    genes=graph.getGenes()
+    for gene in genes:
+        mates=gene.enhancerMates
+        if(len(mates)<1): continue
+        for enhancer in mates:
+            #if(enhancer.numPeaks<2): continue
+            if(enhancer.numPeaks>1): continue
+            p300=getP300(enhancer)
+            print(gene.logFC,p300,sep="\t")
+
+def getP300(enhancer):
+    p300=0
+    for peak in enhancer.peaks:
+        p300+=peak.raw_p300_t3-peak.raw_p300_t0
+    return p300
+
+def enhancerHasGR(enhancer):
+    for peak in enhancer.peaks:
+        if("GR" in peak.motifs): return True
+    return False
+
+def enhancerHasAP1(enhancer):
+    for peak in enhancer.peaks:
+        for motif in peak.motifs:
+            if("JUN" in motif or "jun" in motif or
+               "FOS" in motif or "fos" in motif): return True
+    return False
 
 def motifsInNonGRpeaks(graph):
     enhancers=graph.getEnhancers()
@@ -154,5 +186,6 @@ if(len(sys.argv)!=3):
 graph=EnhancerGraph(enhancerTimepoint,geneTimepoint)
 #multiResponsiveMotifs(graph)
 #GR_vs_AP1(graph)
-motifsInNonGRpeaks(graph)
+#motifsInNonGRpeaks(graph)
+regressSubset(graph)
 
