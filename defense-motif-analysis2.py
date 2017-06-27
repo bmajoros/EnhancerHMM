@@ -16,9 +16,9 @@ import ProgramName
 from Interval import Interval
 from Rex import Rex
 rex=Rex()
-import Fastb
+from Fastb import Fastb
 
-MIN_PEAK_LEN=250
+MIN_PEAK_LEN=100 #250
 DELTA="/home/bmajoros/GGR/delta"
 #ENHANCER_COORDS=DELTA+"/p300-hg38.bed"
 PREDICTIONS=DELTA+"/genomewide-loopy.txt"
@@ -42,14 +42,14 @@ def loadPredictions(filename,wantTime):
                 raise Exception("can't parse "+field)
             state=int(rex[1]); begin=int(rex[2]); end=int(rex[3])
             if(state!=2 and state!=3 and state!=4): continue
+            if(end-begin<MIN_PEAK_LEN): continue
             peak=Interval(begin,end)
             peak.type="peak" if state==3 else "hump"
             peak.ID=peakID+"_"+str(nextElemID)
             nextElemID+=1
             peak.motifs=set()
             parse.append(peak)
-        if(byChr.get(peakID,None) is None): byChr[peakID]=[]
-        byChr[peakID].append(parse)
+        byChr[peakID]=parse
     IN.close()
     return byChr
 
@@ -68,13 +68,14 @@ def processFastb(filename,wantTime,parses):
     if(not rex.find("(\S+)\.standardized_across_all_timepoints\.(t\d+)\.fastb",filename)):
         raise Exception(filename)
     peakID=rex[1]; thisTime=rex[2]
-    if(thisTime!=wantTime): return
-    peakAndHumps=parses.get(peakID,None)
+    #if(thisTime!=wantTime): return
+    peaksAndHumps=parses.get(peakID,None)
+    if(peaksAndHumps is None): return
     if(not hasPeak(peaksAndHumps)): return
     fastb=Fastb(MOTIF_FASTBS+"/"+filename)
     numTracks=fastb.numTracks()
     for i in range(numTracks):
-        track=fastb.getIthTrack()
+        track=fastb.getIthTrack(i)
         motifID=track.getID()
         hits=track.getNonzeroRegions()
         assignHitsToPeaks(motifID,hits,peaksAndHumps)

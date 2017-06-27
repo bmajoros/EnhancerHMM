@@ -44,7 +44,8 @@ for motif in humpCounts.keys(): motifs.add(motif)
 for motif in motifs:
     peakCount=peakCounts.get(motif,0)
     humpCount=humpCounts.get(motif,0)
-    peakFreq=round(1000000*float(peakCount)/float(peakLength),5)
-    humpFreq=round(1000000*float(humpCount)/float(humpLength),5)
-    print(motif,peakFreq,humpFreq,peakCount,humpCount,numPeaks,numHumps,sep="\t")
+    peakFreq=round(1000000*float(peakCount)/float(peakLength),1)
+    humpFreq=round(1000000*float(humpCount)/float(humpLength),1)
+    enrichment=round(peakFreq/humpFreq,1)
+    print(motif,enrichment,peakFreq,humpFreq,peakCount,humpCount,sep="\t")
 
