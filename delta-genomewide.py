@@ -19,8 +19,10 @@ rex=Rex()
 
 # GLOBALS
 BASE="/home/bmajoros/GGR/delta"
-NODNA=BASE+"/no-dna"
-OUTDIR=BASE+"/delta-fastb"
+#NODNA=BASE+"/no-dna"
+NODNA=BASE+"/10kb-raw"
+#OUTDIR=BASE+"/delta-fastb"
+OUTDIR=BASE+"/10kb"
 TIMEPOINTS=("t05","t1","t2","t3","t4","t5","t6","t7","t8","t10","t12")
 
 def loadList(infile):
@@ -38,6 +40,7 @@ def process(peaks,indir,outdir):
             in1=indir+"/"+peak+".standardized_across_all_timepoints.t00.fastb"
             in2=indir+"/"+peak+".standardized_across_all_timepoints."+\
                 timepoint+".fastb"
+            if(not os.path.exists(in1) or not os.path.exists(in2)): continue
             outfile=outdir+"/"+peak+"."+timepoint+".fastb"
             combine(in1,in2,timepoint,outfile)
 
@@ -45,14 +48,18 @@ def combine(in1,in2,timepoint,outfile):
     fastb1=Fastb(in1);
     fastb2=Fastb(in2);
     n=fastb1.numTracks()
+    toDrop=set()
     for i in range(n):
         track=fastb1.getIthTrack(i)
         name=track.getID()
-        fastb1.renameTrack(name,name+".t00")
+        if(track.isDiscrete()): toDrop.add(name)
+        else: fastb1.renameTrack(name,name+".t00")
+    for d in toDrop: fastb1.dropTrack(d)
     n=fastb2.numTracks()
     for i in range(n):
         track=fastb2.getIthTrack(i)
         name=track.getID()
+        if(track.isDiscrete()): continue
         track.rename(name+".t3") # name used by the HMM
         fastb1.addTrack(track);
     fastb1.save(outfile)

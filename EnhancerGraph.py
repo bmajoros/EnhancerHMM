@@ -37,7 +37,8 @@ class EnhancerGraph:
         self.rex=Rex()
         self.CHUNK_WIDTH=1000
         self.MAX_DIST_TO_ANCHOR=1
-        hiCfile="/data/reddylab/Tony/HiC/GC_Timecourse/merged_hics/iter3/merged.loops.fdr.0.01.bedpe"
+        #hiCfile="/data/reddylab/Tony/HiC/GC_Timecourse/merged_hics/iter3/merged.loops.fdr.0.01.bedpe"
+        hiCfile="/data/reddylab/Tony/HiC/GC_Timecourse/merged_hics/iter3/merged.loops.fdr.0.001.bedpe"
         tssFile="tss.hg38.txt"
         edgeRfile="/data/reddylab/projects/GGR/results/rna_seq/differential_expression/iter0/edgeR/edgeR.sva."+geneTimepoint+".vs.t00.protein_coding.txt"
         enhancerFile="p300-hg38.bed"

@@ -22,29 +22,34 @@ def regressSubset(graph):
     for gene in genes:
         mates=gene.enhancerMates
         if(len(mates)<1): continue
+        totalP300=0
+        count=0
         for enhancer in mates:
+            if(len(enhancer.peaks)==0): continue
             #if(enhancer.numPeaks<2): continue
-            if(enhancer.numPeaks>1): continue
-            if(enhancerHasAP1(enhancer)): continue
+            #if(enhancer.numPeaks>1): continue
+            #if(enhancerHasAP1(enhancer)): continue
             #if(not enhancerHasAP1(enhancer)): continue
+            #if(enhancerHasGR(enhancer)): continue
+            #if(not enhancerHasGR(enhancer)): continue
             p300=getP300(enhancer)
-            print(gene.logFC,p300,sep="\t")
+            #totalP300=max(totalP300,p300)
+            totalP300+=p300
+            #print(gene.logFC,p300,sep="\t")
+            count+=1
+        if(count>0): print(totalP300,gene.logFC,sep="\t")
 
-def regressAll(graph):
-    genes=graph.getGenes()
-    for gene in genes:
-        mates=gene.enhancerMates
-        if(len(mates)<1): continue
-        for enhancer in mates:
-            #if(enhancer.numPeaks<2): continue
-            if(enhancer.numPeaks>1): continue
-            p300=getP300(enhancer)
-            print(gene.logFC,p300,sep="\t")
+def hasAnyMotif(enhancer):
+    for peak in enhancer.peaks:
+        if(len(peak.motifs)>0): return True
+    return False
 
 def getP300(enhancer):
     p300=0
+    if(len(enhancer.peaks)==0): exit("no peaks!")
     for peak in enhancer.peaks:
         p300+=peak.raw_p300_t3-peak.raw_p300_t0
+        #p300=max(p300,peak.raw_p300_t3-peak.raw_p300_t0)
     return p300
 
 def enhancerHasGR(enhancer):

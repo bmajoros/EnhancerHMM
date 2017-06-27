@@ -56,6 +56,8 @@ lines(df[c(6,4)],lwd=linewidth,col="cyan")
 points(df[c(6,5)],pch=pointtype,col="navy")
 lines(df[c(6,5)],lwd=linewidth,col="navy")
 
+abline(h=0,lty=2,col="black")
+
 dev.off()
 
 

@@ -229,6 +229,39 @@ def pairViaAnchors(byChr):
                 for other in anchor.mate.objects:
                     object.mates.append(other)
 
+def countAnchorOverlaps(byChr):
+    seenGenes=set(); seenEnhancers=set(); seenPairs=set()
+    allGenes=set(); allEnhancers=set()
+    totalAnchors=0
+    for chr in byChr.keys():
+        array=byChr[chr]
+        for elem in array:
+            if(elem.type=="anchor"):
+                totalAnchors+=1
+                for object in elem.objects:
+                    if(object.type=="gene"):
+                        seenGenes.add(object.id)
+                        for mate in object.mates:
+                            if(mate.type=="enhancer"):
+                                seenPairs.add(object.id+"_"+mate.id)
+                    elif(object.type=="enhancer"):
+                        seenEnhancers.add(object.id)
+            elif(elem.type=="gene"): allGenes.add(elem.id)
+            elif(elem.type=="enhancer"): allEnhancers.add(elem.id)
+    overlappedGenes=len(seenGenes)
+    overlappedEnhancers=len(seenEnhancers)
+    totalGenes=len(allGenes)
+    totalEnhancers=len(allEnhancers)
+    totalPairs=len(seenPairs)
+    print("overlapped enhancers:",overlappedEnhancers,
+          "total enhancers:",totalEnhancers,
+          "overlapped genes:",overlappedGenes,
+          "total genes:",totalGenes,
+          "linked pairs:",totalPairs,
+          "total anchors:",totalAnchors,
+          sep="\t")
+    
+
 def loadMotifs(filename,byID):
     IN=open(filename)
     for line in IN:
@@ -322,11 +355,12 @@ expressionHash=loadExpressionFile(edgeRfile)
 loadTssFile(tssFile,byChr,expressionHash)
 byEnhancerID={}
 loadEnhancers(enhancerFile,byChr,byEnhancerID)
-loadStandardized(featuresFileStandard,timepoint,byEnhancerID)
-loadRaw(featuresFileRaw,timepoint,byEnhancerID)
-loadMotifs(motifFile,byEnhancerID)
+#loadStandardized(featuresFileStandard,timepoint,byEnhancerID)
+#loadRaw(featuresFileRaw,timepoint,byEnhancerID)
+#loadMotifs(motifFile,byEnhancerID)
 buildGraph(byChr)
-dumpGraph(byChr)
+countAnchorOverlaps(byChr)
+#dumpGraph(byChr)
 
 
 
