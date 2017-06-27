@@ -11,10 +11,12 @@ from builtins import (bytes, dict, int, list, object, range, str, ascii,
 # The above imports should allow this program to run in both Python 2 and
 # Python 3.  You might need to update your version of module "future".
 import sys
+import os
 import ProgramName
 from Interval import Interval
 from Rex import Rex
 rex=Rex()
+import Fastb
 
 MIN_PEAK_LEN=250
 DELTA="/home/bmajoros/GGR/delta"
@@ -34,6 +36,7 @@ def loadPredictions(filename,wantTime):
         if(thisTime!=wantTime): continue
         fields=parse.split("|")
         parse=[]
+        nextElemID=1
         for field in fields:
             if(not rex.find("(\d+):(\d+)-(\d+)",field)):
                 raise Exception("can't parse "+field)
@@ -41,11 +44,46 @@ def loadPredictions(filename,wantTime):
             if(state!=2 and state!=3 and state!=4): continue
             peak=Interval(begin,end)
             peak.type="peak" if state==3 else "hump"
+            peak.ID=peakID+"_"+str(nextElemID)
+            nextElemID+=1
+            peak.motifs=set()
             parse.append(peak)
         if(byChr.get(peakID,None) is None): byChr[peakID]=[]
         byChr[peakID].append(parse)
     IN.close()
     return byChr
+
+def hasPeak(elements):
+    for elem in elements:
+        if(elem.type=="peak"): return True
+    return False
+
+def assignHitsToPeaks(motifID,hits,peaks):
+    for hit in hits:
+        for peak in peaks:
+            if(hit.overlaps(peak)):
+                peak.motifs.add(motifID)
+
+def processFastb(filename,wantTime,parses):
+    if(not rex.find("(\S+)\.standardized_across_all_timepoints\.(t\d+)\.fastb",filename)):
+        raise Exception(filename)
+    peakID=rex[1]; thisTime=rex[2]
+    if(thisTime!=wantTime): return
+    peakAndHumps=parses.get(peakID,None)
+    if(not hasPeak(peaksAndHumps)): return
+    fastb=Fastb(MOTIF_FASTBS+"/"+filename)
+    numTracks=fastb.numTracks()
+    for i in range(numTracks):
+        track=fastb.getIthTrack()
+        motifID=track.getID()
+        hits=track.getNonzeroRegions()
+        assignHitsToPeaks(motifID,hits,peaksAndHumps)
+    for elem in peaksAndHumps:
+        print(elem.ID,elem.type,elem.getLength(),sep="\t",end="")
+        for motif in elem.motifs:
+            print("\t"+motif,end="")
+        print()
+        elem.motifs=None
 
 #=========================================================================
 # main()
@@ -54,7 +92,12 @@ if(len(sys.argv)!=2):
     exit(ProgramName.get()+" <timepoint>\n")
 (timepoint,)=sys.argv[1:]
 
+# Load parses from RESCUE
 byChr=loadPredictions(PREDICTIONS,timepoint)
 
+# Process motif FASTB files
+files=os.listdir(MOTIF_FASTBS)
+for file in files:
+    processFastb(file,timepoint,byChr)
 
 
