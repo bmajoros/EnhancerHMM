@@ -22,7 +22,9 @@ N=len(TIMEPOINTS)
 for cluster in range(1,11):
     first=True
     for geneTime in TIMEPOINTS:
-        cmd="src/cluster-to-gene-expression.py genes-enhancers-distal.txt /data/reddylab/projects/GGR/results/rna_seq/differential_expression/iter0/edgeR/edgeR.sva."+geneTime+".vs.t00.protein_coding.txt "+" figure/cluster-membership.txt "+str(cluster)
+        #cmd="src/cluster-to-gene-expression.py genes-enhancers-distal.txt /data/reddylab/projects/GGR/results/rna_seq/differential_expression/iter0/edgeR/edgeR.sva."+geneTime+".vs.t00.protein_coding.txt "+" figure/cluster-membership.txt "+str(cluster)
+        cmd="src/cluster-to-gene-expression.py genes-enhancers-distal.txt /data/reddylab/projects/GGR/results/rna_seq/differential_expression/iter0/edgeR/"+geneTime+".vs.t00.protein_coding.txt "+" figure/cluster-membership.txt "+str(cluster)
+        print(cmd)
         pipe=Pipe(cmd)
         array=[]
         while(True):
